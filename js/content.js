@@ -2,7 +2,7 @@
 
 // Default settings
 let taxSettings = {
-  state: 'CA',
+  state: 'WA',
   filingStatus: 'Single'
 };
 
@@ -38,38 +38,56 @@ function calculateFederalTax(salary, filingStatus) {
   if (filingStatus === 'Single') {
     brackets = [
       { threshold: 0, rate: 0.10 },
-      { threshold: 11000, rate: 0.12 },
-      { threshold: 44725, rate: 0.22 },
-      { threshold: 95375, rate: 0.24 },
-      { threshold: 182100, rate: 0.32 },
-      { threshold: 231250, rate: 0.35 },
-      { threshold: 578125, rate: 0.37 }
+      { threshold: 11601, rate: 0.12 },
+      { threshold: 47151, rate: 0.22 },
+      { threshold: 100526, rate: 0.24 },
+      { threshold: 191951, rate: 0.32 },
+      { threshold: 243726, rate: 0.35 },
+      { threshold: 609351, rate: 0.37 }
     ];
   } else if (filingStatus === 'Married Filing Jointly') {
     brackets = [
       { threshold: 0, rate: 0.10 },
-      { threshold: 22000, rate: 0.12 },
-      { threshold: 89450, rate: 0.22 },
-      { threshold: 190750, rate: 0.24 },
-      { threshold: 364200, rate: 0.32 },
-      { threshold: 462500, rate: 0.35 },
-      { threshold: 693750, rate: 0.37 }
+      { threshold: 23201, rate: 0.12 },
+      { threshold: 94301, rate: 0.22 },
+      { threshold: 201051, rate: 0.24 },
+      { threshold: 383901, rate: 0.32 },
+      { threshold: 487451, rate: 0.35 },
+      { threshold: 731201, rate: 0.37 }
+    ];
+  } else if (filingStatus === 'Married Filing Separately') {
+    brackets = [
+      { threshold: 0, rate: 0.10 },
+      { threshold: 11601, rate: 0.12 },
+      { threshold: 47151, rate: 0.22 },
+      { threshold: 100526, rate: 0.24 },
+      { threshold: 191951, rate: 0.32 },
+      { threshold: 243726, rate: 0.35 },
+      { threshold: 365601, rate: 0.37 }
     ];
   } else { // Head of Household
     brackets = [
       { threshold: 0, rate: 0.10 },
-      { threshold: 15700, rate: 0.12 },
-      { threshold: 59850, rate: 0.22 },
-      { threshold: 95350, rate: 0.24 },
-      { threshold: 182100, rate: 0.32 },
-      { threshold: 231250, rate: 0.35 },
-      { threshold: 578100, rate: 0.37 }
+      { threshold: 16551, rate: 0.12 },
+      { threshold: 63101, rate: 0.22 },
+      { threshold: 100501, rate: 0.24 },
+      { threshold: 191951, rate: 0.32 },
+      { threshold: 243701, rate: 0.35 },
+      { threshold: 609351, rate: 0.37 }
     ];
   }
   
   // Standard deduction based on filing status
-  let standardDeduction = filingStatus === 'Married Filing Jointly' ? 27700 : 
-                          filingStatus === 'Head of Household' ? 20800 : 13850;
+  let standardDeduction;
+  if (filingStatus === 'Married Filing Jointly') {
+    standardDeduction = 27700;
+  } else if (filingStatus === 'Married Filing Separately') {
+    standardDeduction = 13850;
+  } else if (filingStatus === 'Head of Household') {
+    standardDeduction = 20800;
+  } else { // Single
+    standardDeduction = 13850;
+  }
   
   // Taxable income after standard deduction
   let taxableIncome = Math.max(0, salary - standardDeduction);
@@ -95,17 +113,115 @@ function calculateFederalTax(salary, filingStatus) {
 }
 
 function calculateStateTax(salary, state, filingStatus) {
-  // Simplified state tax rates (approximate)
-  const stateRates = {
-    'CA': 0.093, // California has high progressive rates
-    'NY': 0.065, // New York has moderately high rates
-    'TX': 0,     // Texas has no state income tax
-    'WA': 0      // Washington has no state income tax
-  };
+  // State tax brackets for 2023
+  let brackets = [];
+  let standardDeduction = 0;
   
-  // Apply a simple flat rate for simplicity
-  // A more accurate calculation would use progressive brackets for each state
-  return salary * stateRates[state];
+  // Define brackets based on state and filing status
+  if (state === 'CA') {
+    // California tax brackets
+    if (filingStatus === 'Single' || filingStatus === 'Married Filing Separately') {
+      standardDeduction = 5202;
+      brackets = [
+        { threshold: 0, rate: 0.01 },
+        { threshold: 10412, rate: 0.02 },
+        { threshold: 24684, rate: 0.04 },
+        { threshold: 38959, rate: 0.06 },
+        { threshold: 54081, rate: 0.08 },
+        { threshold: 68350, rate: 0.093 },
+        { threshold: 349137, rate: 0.103 },
+        { threshold: 418961, rate: 0.113 },
+        { threshold: 698272, rate: 0.123 }
+      ];
+    } else if (filingStatus === 'Married Filing Jointly') {
+      standardDeduction = 10404;
+      brackets = [
+        { threshold: 0, rate: 0.01 },
+        { threshold: 20824, rate: 0.02 },
+        { threshold: 49368, rate: 0.04 },
+        { threshold: 77918, rate: 0.06 },
+        { threshold: 108162, rate: 0.08 },
+        { threshold: 136700, rate: 0.093 },
+        { threshold: 698274, rate: 0.103 },
+        { threshold: 837922, rate: 0.113 },
+        { threshold: 1396544, rate: 0.123 }
+      ];
+    } else { // Head of Household
+      standardDeduction = 10404;
+      brackets = [
+        { threshold: 0, rate: 0.01 },
+        { threshold: 20888, rate: 0.02 },
+        { threshold: 49461, rate: 0.04 },
+        { threshold: 63729, rate: 0.06 },
+        { threshold: 78435, rate: 0.08 },
+        { threshold: 99379, rate: 0.093 },
+        { threshold: 508500, rate: 0.103 },
+        { threshold: 610380, rate: 0.113 },
+        { threshold: 1017180, rate: 0.123 }
+      ];
+    }
+  } else if (state === 'NY') {
+    // New York tax brackets
+    if (filingStatus === 'Single' || filingStatus === 'Married Filing Separately') {
+      standardDeduction = 8000;
+      brackets = [
+        { threshold: 0, rate: 0.04 },
+        { threshold: 13900, rate: 0.045 },
+        { threshold: 80650, rate: 0.0525 },
+        { threshold: 215400, rate: 0.0585 },
+        { threshold: 1077550, rate: 0.0625 },
+        { threshold: 5000000, rate: 0.0685 },
+        { threshold: 25000000, rate: 0.0965 }
+      ];
+    } else if (filingStatus === 'Married Filing Jointly') {
+      standardDeduction = 16050;
+      brackets = [
+        { threshold: 0, rate: 0.04 },
+        { threshold: 27900, rate: 0.045 },
+        { threshold: 161550, rate: 0.0525 },
+        { threshold: 323200, rate: 0.0585 },
+        { threshold: 2155350, rate: 0.0625 },
+        { threshold: 5000000, rate: 0.0685 },
+        { threshold: 25000000, rate: 0.0965 }
+      ];
+    } else { // Head of Household
+      standardDeduction = 11200;
+      brackets = [
+        { threshold: 0, rate: 0.04 },
+        { threshold: 20900, rate: 0.045 },
+        { threshold: 107650, rate: 0.0525 },
+        { threshold: 269300, rate: 0.0585 },
+        { threshold: 1616450, rate: 0.0625 },
+        { threshold: 5000000, rate: 0.0685 },
+        { threshold: 25000000, rate: 0.0965 }
+      ];
+    }
+  } else if (state === 'TX' || state === 'WA') {
+    // Texas and Washington have no state income tax
+    return 0;
+  }
+  
+  // Taxable income after state standard deduction
+  let taxableIncome = Math.max(0, salary - standardDeduction);
+  
+  // Calculate tax using brackets
+  let tax = 0;
+  for (let i = 0; i < brackets.length; i++) {
+    if (i === brackets.length - 1) {
+      // For the highest bracket
+      if (taxableIncome > brackets[i].threshold) {
+        tax += (taxableIncome - brackets[i].threshold) * brackets[i].rate;
+      }
+    } else {
+      // For all other brackets
+      if (taxableIncome > brackets[i].threshold) {
+        const bracketIncome = Math.min(taxableIncome, brackets[i+1].threshold) - brackets[i].threshold;
+        tax += bracketIncome * brackets[i].rate;
+      }
+    }
+  }
+  
+  return tax;
 }
 
 function calculateFICATax(salary) {
@@ -267,8 +383,12 @@ function addAfterTaxColumn() {
         const newCell = document.createElement('td');
         newCell.className = totalCell.className;
         
+        // Check if the Total value is bold (has the css-xj4mea class)
+        const isTotalBold = totalValueElement.className.includes('css-xj4mea');
+        
         const valueElement = document.createElement('h6');
-        valueElement.className = totalValueElement.className;
+        // Use the same class as the Total value, including the bold class if present
+        valueElement.className = isTotalBold ? 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea' : totalValueElement.className;
         valueElement.textContent = formatSalary(afterTaxSalary);
         
         newCell.appendChild(valueElement);
@@ -408,8 +528,18 @@ function updateAfterTaxValues() {
           afterTaxSalary = totalSalary - totalTax;
         }
         
-        // Update the after-tax value
+        // Check if the Total value is bold (has the css-xj4mea class)
+        const isTotalBold = totalValueElement.className.includes('css-xj4mea');
+        
+        // Update the after-tax value and ensure proper styling
         afterTaxValueElement.textContent = formatSalary(afterTaxSalary);
+        
+        // Make sure the styling matches the Total column (bold if Total is bold)
+        if (isTotalBold && !afterTaxValueElement.className.includes('css-xj4mea')) {
+          afterTaxValueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea';
+        } else if (!isTotalBold && afterTaxValueElement.className.includes('css-xj4mea')) {
+          afterTaxValueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-6xe2a5';
+        }
       });
       
       console.log(`Taxes.fyi: Updated values in table ${tableIndex}`);
@@ -419,14 +549,17 @@ function updateAfterTaxValues() {
   });
 }
 
-// Set up a MutationObserver to detect when new tables are added
+// Set up a MutationObserver to detect when new tables are added or content changes
 const observer = new MutationObserver(function(mutations) {
   let shouldCheck = false;
+  let shouldUpdateStyles = false;
   
-  // Check if any tables were added
+  // Check mutations for table additions or style changes
   mutations.forEach(mutation => {
     if (mutation.type === 'childList') {
       const addedNodes = Array.from(mutation.addedNodes);
+      
+      // Check for new tables
       const hasTable = addedNodes.some(node => {
         return node.nodeType === 1 && (
           node.classList && node.classList.contains('MuiTable-root') ||
@@ -437,6 +570,23 @@ const observer = new MutationObserver(function(mutations) {
       if (hasTable) {
         shouldCheck = true;
       }
+      
+      // Check for salary value changes (like when expanding a dropdown)
+      const hasSalaryChanges = addedNodes.some(node => {
+        return node.nodeType === 1 && (
+          (node.tagName === 'H6' && node.closest('td')) ||
+          node.querySelector && node.querySelector('h6')
+        );
+      });
+      
+      if (hasSalaryChanges) {
+        shouldUpdateStyles = true;
+      }
+    } else if (mutation.type === 'attributes' && 
+               mutation.target.tagName === 'H6' && 
+               mutation.attributeName === 'class') {
+      // Detect class changes on h6 elements (which could be salary values)
+      shouldUpdateStyles = true;
     }
   });
   
@@ -444,10 +594,197 @@ const observer = new MutationObserver(function(mutations) {
     console.log('Taxes.fyi: New table detected, checking for modifications...');
     setTimeout(addAfterTaxColumn, 1000);
   }
+  
+  if (shouldUpdateStyles) {
+    console.log('Taxes.fyi: Salary display changes detected, updating styles...');
+    setTimeout(fixAfterTaxStyles, 500);
+  }
 });
 
-// Start observing the document
-observer.observe(document.body, { childList: true, subtree: true });
+// Function to fix styling on after-tax values
+function fixAfterTaxStyles() {
+  const tables = document.querySelectorAll('.MuiTable-root');
+  
+  tables.forEach(table => {
+    // Find the header row
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+    
+    // Find the Total column and After Tax column
+    const headerCells = headerRow.querySelectorAll('th');
+    let totalColumnIndex = -1;
+    let afterTaxColumnIndex = -1;
+    
+    for (let i = 0; i < headerCells.length; i++) {
+      const headerText = headerCells[i].textContent.trim();
+      if (headerText.includes('Total')) {
+        totalColumnIndex = i;
+      } else if (headerText.includes('After Tax')) {
+        afterTaxColumnIndex = i;
+      }
+    }
+    
+    if (totalColumnIndex === -1 || afterTaxColumnIndex === -1) return;
+    
+    // Update the styling for each row
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      
+      if (totalColumnIndex >= cells.length || afterTaxColumnIndex >= cells.length) return;
+      
+      const totalCell = cells[totalColumnIndex];
+      const afterTaxCell = cells[afterTaxColumnIndex];
+      const totalValueElement = totalCell.querySelector('h6');
+      const afterTaxValueElement = afterTaxCell.querySelector('h6');
+      
+      if (!totalValueElement || !afterTaxValueElement) return;
+      
+      // Check if the Total value is bold (has the css-xj4mea class)
+      const isTotalBold = totalValueElement.className.includes('css-xj4mea');
+      const isAfterTaxBold = afterTaxValueElement.className.includes('css-xj4mea');
+      
+      // Make sure the styling matches the Total column (bold if Total is bold)
+      if (isTotalBold && !isAfterTaxBold) {
+        afterTaxValueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea';
+      } else if (!isTotalBold && isAfterTaxBold) {
+        afterTaxValueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-6xe2a5';
+      }
+    });
+  });
+}
+
+// Start observing the document for both content and attribute changes
+observer.observe(document.body, { 
+  childList: true, 
+  subtree: true,
+  attributes: true,
+  attributeFilter: ['class']
+});
 
 // Initial run
 console.log('Taxes.fyi: Extension loaded');
+
+// Also set up click event listeners for any buttons that might expand salary information
+document.addEventListener('click', function(event) {
+  // Check if the click was on a button or element that might trigger salary changes
+  const target = event.target;
+  
+  // If it's a button or something that might expand/collapse salary info
+  if (target.tagName === 'BUTTON' || 
+      target.closest('button') || 
+      target.getAttribute('role') === 'button' ||
+      target.classList.contains('monthly-toggle-text_salaryTypeLabelButton__joQJj')) {
+    
+    console.log('Taxes.fyi: Potential salary toggle button clicked');
+    
+    // Wait a bit for the UI to update, then refresh all values and fix styles
+    setTimeout(function() {
+      updateAllAfterTaxValues(); // Use the new function to update all values
+      fixAfterTaxStyles();
+    }, 500);
+  }
+});
+
+// Function to update all after-tax values in a table
+function updateAllAfterTaxValues() {
+  console.log('Taxes.fyi: Refreshing all after-tax values...');
+  const tables = document.querySelectorAll('.MuiTable-root');
+  
+  tables.forEach(table => {
+    // Find the header row
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+    
+    // Find the Total column and After Tax column
+    const headerCells = headerRow.querySelectorAll('th');
+    let totalColumnIndex = -1;
+    let afterTaxColumnIndex = -1;
+    
+    for (let i = 0; i < headerCells.length; i++) {
+      const headerText = headerCells[i].textContent.trim();
+      if (headerText.includes('Total')) {
+        totalColumnIndex = i;
+      } else if (headerText.includes('After Tax')) {
+        afterTaxColumnIndex = i;
+      }
+    }
+    
+    if (totalColumnIndex === -1 || afterTaxColumnIndex === -1) return;
+    
+    // Process all rows
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      
+      if (totalColumnIndex >= cells.length) return;
+      
+      const totalCell = cells[totalColumnIndex];
+      const totalValueElement = totalCell.querySelector('h6');
+      
+      if (!totalValueElement) return;
+      
+      // Get the total salary value
+      const totalSalaryText = totalValueElement.textContent;
+      const totalSalary = parseSalaryString(totalSalaryText);
+      
+      // Calculate after-tax salary
+      let afterTaxSalary = totalSalary;
+      if (totalSalary > 0) {
+        const totalTax = calculateTotalTax(totalSalary);
+        afterTaxSalary = totalSalary - totalTax;
+      }
+      
+      // Check if the Total value is bold
+      const isTotalBold = totalValueElement.className.includes('css-xj4mea');
+      
+      // Check if this row has an after-tax cell already
+      let afterTaxCell;
+      if (afterTaxColumnIndex < cells.length) {
+        afterTaxCell = cells[afterTaxColumnIndex];
+      }
+      
+      if (!afterTaxCell) {
+        // Create a new cell if it doesn't exist
+        afterTaxCell = document.createElement('td');
+        afterTaxCell.className = totalCell.className;
+        
+        // Create the value element
+        const valueElement = document.createElement('h6');
+        valueElement.className = isTotalBold ? 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea' : totalValueElement.className;
+        valueElement.textContent = formatSalary(afterTaxSalary);
+        
+        afterTaxCell.appendChild(valueElement);
+        
+        // Insert at the right position
+        if (afterTaxColumnIndex < cells.length) {
+          row.insertBefore(afterTaxCell, cells[afterTaxColumnIndex]);
+        } else {
+          row.appendChild(afterTaxCell);
+        }
+      } else {
+        // Update existing cell
+        let valueElement = afterTaxCell.querySelector('h6');
+        
+        if (!valueElement) {
+          // Create value element if it doesn't exist
+          valueElement = document.createElement('h6');
+          valueElement.className = isTotalBold ? 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea' : totalValueElement.className;
+          afterTaxCell.appendChild(valueElement);
+        }
+        
+        // Always update the value
+        valueElement.textContent = formatSalary(afterTaxSalary);
+        
+        // Ensure proper styling
+        if (isTotalBold && !valueElement.className.includes('css-xj4mea')) {
+          valueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea';
+        } else if (!isTotalBold && valueElement.className.includes('css-xj4mea')) {
+          valueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-6xe2a5';
+        }
+      }
+    });
+  });
+}
