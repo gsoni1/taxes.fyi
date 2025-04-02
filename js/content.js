@@ -38,22 +38,22 @@ function calculateFederalTax(salary, filingStatus) {
   if (filingStatus === 'Single') {
     brackets = [
       { threshold: 0, rate: 0.10 },
-      { threshold: 11601, rate: 0.12 },
-      { threshold: 47151, rate: 0.22 },
-      { threshold: 100526, rate: 0.24 },
-      { threshold: 191951, rate: 0.32 },
-      { threshold: 243726, rate: 0.35 },
-      { threshold: 609351, rate: 0.37 }
+      { threshold: 11925, rate: 0.12 },
+      { threshold: 48475, rate: 0.22 },
+      { threshold: 103350, rate: 0.24 },
+      { threshold: 197300, rate: 0.32 },
+      { threshold: 250525, rate: 0.35 },
+      { threshold: 626350, rate: 0.37 }
     ];
   } else if (filingStatus === 'Married Filing Jointly') {
     brackets = [
       { threshold: 0, rate: 0.10 },
-      { threshold: 23201, rate: 0.12 },
-      { threshold: 94301, rate: 0.22 },
-      { threshold: 201051, rate: 0.24 },
-      { threshold: 383901, rate: 0.32 },
-      { threshold: 487451, rate: 0.35 },
-      { threshold: 731201, rate: 0.37 }
+      { threshold: 23850, rate: 0.12 },
+      { threshold: 96950, rate: 0.22 },
+      { threshold: 206700, rate: 0.24 },
+      { threshold: 394600, rate: 0.32 },
+      { threshold: 501050, rate: 0.35 },
+      { threshold: 751600, rate: 0.37 }
     ];
   } else if (filingStatus === 'Married Filing Separately') {
     brackets = [
@@ -80,13 +80,13 @@ function calculateFederalTax(salary, filingStatus) {
   // Standard deduction based on filing status
   let standardDeduction;
   if (filingStatus === 'Married Filing Jointly') {
-    standardDeduction = 27700;
+    standardDeduction = 30000;
   } else if (filingStatus === 'Married Filing Separately') {
-    standardDeduction = 13850;
+    standardDeduction = 15000;
   } else if (filingStatus === 'Head of Household') {
-    standardDeduction = 20800;
+    standardDeduction = 22500;
   } else { // Single
-    standardDeduction = 13850;
+    standardDeduction = 15000;
   }
   
   // Taxable income after standard deduction
@@ -121,43 +121,43 @@ function calculateStateTax(salary, state, filingStatus) {
   if (state === 'CA') {
     // California tax brackets
     if (filingStatus === 'Single' || filingStatus === 'Married Filing Separately') {
-      standardDeduction = 5202;
+      standardDeduction = 5540;
       brackets = [
         { threshold: 0, rate: 0.01 },
-        { threshold: 10412, rate: 0.02 },
-        { threshold: 24684, rate: 0.04 },
-        { threshold: 38959, rate: 0.06 },
-        { threshold: 54081, rate: 0.08 },
-        { threshold: 68350, rate: 0.093 },
-        { threshold: 349137, rate: 0.103 },
-        { threshold: 418961, rate: 0.113 },
-        { threshold: 698272, rate: 0.123 }
+        { threshold: 10756, rate: 0.02 },
+        { threshold: 25499, rate: 0.04 },
+        { threshold: 40245, rate: 0.06 },
+        { threshold: 55866, rate: 0.08 },
+        { threshold: 70606, rate: 0.093 },
+        { threshold: 360659, rate: 0.103 },
+        { threshold: 432787, rate: 0.113 },
+        { threshold: 721314, rate: 0.123 }
       ];
     } else if (filingStatus === 'Married Filing Jointly') {
-      standardDeduction = 10404;
+      standardDeduction = 11080;
       brackets = [
         { threshold: 0, rate: 0.01 },
-        { threshold: 20824, rate: 0.02 },
-        { threshold: 49368, rate: 0.04 },
-        { threshold: 77918, rate: 0.06 },
-        { threshold: 108162, rate: 0.08 },
-        { threshold: 136700, rate: 0.093 },
-        { threshold: 698274, rate: 0.103 },
-        { threshold: 837922, rate: 0.113 },
-        { threshold: 1396544, rate: 0.123 }
+        { threshold: 21512, rate: 0.02 },
+        { threshold: 50998, rate: 0.04 },
+        { threshold: 80490, rate: 0.06 },
+        { threshold: 111732, rate: 0.08 },
+        { threshold: 141212, rate: 0.093 },
+        { threshold: 721318, rate: 0.103 },
+        { threshold: 865574, rate: 0.113 },
+        { threshold: 1442628, rate: 0.123 }
       ];
     } else { // Head of Household
-      standardDeduction = 10404;
+      standardDeduction = 11080;
       brackets = [
         { threshold: 0, rate: 0.01 },
-        { threshold: 20888, rate: 0.02 },
-        { threshold: 49461, rate: 0.04 },
-        { threshold: 63729, rate: 0.06 },
-        { threshold: 78435, rate: 0.08 },
-        { threshold: 99379, rate: 0.093 },
-        { threshold: 508500, rate: 0.103 },
-        { threshold: 610380, rate: 0.113 },
-        { threshold: 1017180, rate: 0.123 }
+        { threshold: 21527, rate: 0.02 },
+        { threshold: 51000, rate: 0.04 },
+        { threshold: 65744, rate: 0.06 },
+        { threshold: 81364, rate: 0.08 },
+        { threshold: 96107, rate: 0.093 },
+        { threshold: 490493, rate: 0.103 },
+        { threshold: 588593, rate: 0.113 },
+        { threshold: 980987, rate: 0.123 }
       ];
     }
   } else if (state === 'NY') {
@@ -166,36 +166,68 @@ function calculateStateTax(salary, state, filingStatus) {
       standardDeduction = 8000;
       brackets = [
         { threshold: 0, rate: 0.04 },
-        { threshold: 13900, rate: 0.045 },
-        { threshold: 80650, rate: 0.0525 },
-        { threshold: 215400, rate: 0.0585 },
-        { threshold: 1077550, rate: 0.0625 },
-        { threshold: 5000000, rate: 0.0685 },
-        { threshold: 25000000, rate: 0.0965 }
+        { threshold: 8501, rate: 0.045 },
+        { threshold: 11701, rate: 0.0525 },
+        { threshold: 13901, rate: 0.055 },
+        { threshold: 80651, rate: 0.06 },
+        { threshold: 215401, rate: 0.0685 },
+        { threshold: 1077551, rate: 0.0965 },
+        { threshold: 5000001, rate: 0.1030 },
+        { threshold: 25000001, rate: 0.1090 }
       ];
     } else if (filingStatus === 'Married Filing Jointly') {
       standardDeduction = 16050;
       brackets = [
         { threshold: 0, rate: 0.04 },
-        { threshold: 27900, rate: 0.045 },
-        { threshold: 161550, rate: 0.0525 },
-        { threshold: 323200, rate: 0.0585 },
-        { threshold: 2155350, rate: 0.0625 },
-        { threshold: 5000000, rate: 0.0685 },
-        { threshold: 25000000, rate: 0.0965 }
+        { threshold: 17151, rate: 0.045 },
+        { threshold: 23601, rate: 0.0525 },
+        { threshold: 27901, rate: 0.055 },
+        { threshold: 161551, rate: 0.06 },
+        { threshold: 323201, rate: 0.0685 },
+        { threshold: 2155351, rate: 0.0965 },
+        { threshold: 5000001, rate: 0.1030 },
+        { threshold: 25000001, rate: 0.1090 }
       ];
     } else { // Head of Household
       standardDeduction = 11200;
       brackets = [
         { threshold: 0, rate: 0.04 },
-        { threshold: 20900, rate: 0.045 },
-        { threshold: 107650, rate: 0.0525 },
-        { threshold: 269300, rate: 0.0585 },
-        { threshold: 1616450, rate: 0.0625 },
-        { threshold: 5000000, rate: 0.0685 },
-        { threshold: 25000000, rate: 0.0965 }
+        { threshold: 12801, rate: 0.045 },
+        { threshold: 17651, rate: 0.0525 },
+        { threshold: 20901, rate: 0.055 },
+        { threshold: 107651, rate: 0.06 },
+        { threshold: 269301, rate: 0.0685 },
+        { threshold: 1616451, rate: 0.0965 },
+        { threshold: 5000001, rate: 0.1030 },
+        { threshold: 25000001, rate: 0.1090 }
       ];
     }
+  } else if (state === 'VA') {
+    // Virginia tax brackets (same for all filing statuses)
+    standardDeduction = filingStatus === 'Married Filing Jointly' ? 17000 : 8500;
+    brackets = [
+      { threshold: 0, rate: 0.02 },
+      { threshold: 3000, rate: 0.03 },
+      { threshold: 5000, rate: 0.05 },
+      { threshold: 17000, rate: 0.0575 }
+    ];
+  } else if (state === 'MA') {
+    // Massachusetts has a flat tax rate of 5% for all income
+    standardDeduction = 0; // MA uses different types of deductions, simplified here
+    brackets = [
+      { threshold: 8000, rate: 0.05 },
+      { threshold: 1083150, rate: 0.09 }
+    ];
+  } else if (state === 'GA') {
+    // Georgia tax brackets (same for all filing statuses)
+    if (filingStatus === 'Married Filing Jointly') {
+      standardDeduction = 24000;
+    } else {
+      standardDeduction = 12000;
+    }
+    brackets = [
+      { threshold: 0, rate: 0.0539 }
+    ];
   } else if (state === 'TX' || state === 'WA') {
     // Texas and Washington have no state income tax
     return 0;
@@ -225,8 +257,8 @@ function calculateStateTax(salary, state, filingStatus) {
 }
 
 function calculateFICATax(salary) {
-  // Social Security (6.2% up to wage base limit of $160,200 for 2023)
-  const socialSecurityTax = Math.min(salary, 160200) * 0.062;
+  // Social Security (6.2% up to wage base limit of $176,100 for 2025)
+  const socialSecurityTax = Math.min(salary, 176100) * 0.062;
   
   // Medicare (1.45% on all earnings, plus 0.9% on earnings over $200,000)
   let medicareTax = salary * 0.0145;
