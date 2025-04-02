@@ -3,7 +3,8 @@
 // Default settings
 let taxSettings = {
   state: 'WA',
-  filingStatus: 'Single'
+  filingStatus: 'Single',
+  localTax: 'sj' // Default to San Jose for California
 };
 
 let columnSettings = {
@@ -269,12 +270,78 @@ function calculateFICATax(salary) {
   return socialSecurityTax + medicareTax;
 }
 
+function calculateLocalTax(salary, state, localTax, filingStatus) {
+  if (localTax === 'none') {
+    return 0;
+  }
+  
+  // Calculate local tax based on locality
+  if (state === 'NY') {
+    if (localTax === 'nyc') {
+      // NYC has a progressive tax system
+      let localTaxAmount = 0;
+      let taxableIncome = salary;
+      
+      if (filingStatus === 'Single' || filingStatus === 'Married Filing Separately') {
+        if (taxableIncome <= 12000) {
+          localTaxAmount = taxableIncome * 0.03078;
+        } else if (taxableIncome <= 25000) {
+          localTaxAmount = 369 + ((taxableIncome - 12000) * 0.03762);
+        } else if (taxableIncome <= 50000) {
+          localTaxAmount = 858 + ((taxableIncome - 25000) * 0.03819);
+        } else {
+          localTaxAmount = 1813 + ((taxableIncome - 500000) * 0.03876);
+        }
+      } else if (filingStatus === 'Married Filing Jointly') {
+        if (taxableIncome <= 21600) {
+          localTaxAmount = taxableIncome * 0.03078;
+        } else if (taxableIncome <= 45000) {
+          localTaxAmount = 665 + ((taxableIncome - 21600) * 0.03762);
+        } else if (taxableIncome <= 90000) {
+          localTaxAmount = 1545 + ((taxableIncome - 45000) * 0.03819);
+        } else {
+          localTaxAmount = 3264 + ((taxableIncome - 90000) * 0.03876);
+        }
+      } else { // Head of Household
+        if (taxableIncome <= 14400) {
+          localTaxAmount = taxableIncome * 0.03078;
+        } else if (taxableIncome <= 30000) {
+          localTaxAmount = 443 + ((taxableIncome - 14400) * 0.03762);
+        } else if (taxableIncome <= 60000) {
+          localTaxAmount = 1030 + ((taxableIncome - 30000) * 0.03819);
+        } else {
+          localTaxAmount = 2176 + ((taxableIncome - 60000) * 0.03876);
+        }
+      }
+      
+      return localTaxAmount;
+    }
+  } else if (state === 'CA') {
+    if (localTax === 'sf') {
+      // San Francisco has a gross receipts tax of 1.5% on salaries over $150,000
+      return salary > 150000 ? (salary - 150000) * 0.015 : 0;
+    } else {
+      return 0;
+    }
+  }
+  
+  return 0;
+}
+
 function calculateTotalTax(salary) {
   const federalTax = calculateFederalTax(salary, taxSettings.filingStatus);
   const stateTax = calculateStateTax(salary, taxSettings.state, taxSettings.filingStatus);
+  const localTax = calculateLocalTax(salary, taxSettings.state, taxSettings.localTax, taxSettings.filingStatus);
   const ficaTax = calculateFICATax(salary);
-  
-  return federalTax + stateTax + ficaTax;
+  if (taxSettings.state == 'NY') {
+    return federalTax + stateTax + localTax + ficaTax + 17000;
+  }
+  else if (taxSettings.state == 'CA' && taxSettings.localTax == 'sf') {
+    return federalTax + stateTax + localTax + ficaTax + 2500;
+  }
+  else {
+    return federalTax + stateTax + localTax + ficaTax;
+  }
 }
 
 // Function to parse salary strings like "$128K" or "$1.05M"
@@ -301,10 +368,15 @@ function parseSalaryString(salaryStr) {
 function formatSalary(value) {
   if (value === 0) return "$ --";
   
+  // Round to the nearest thousand
+  value = Math.round(value / 1000) * 1000;
+  
   if (value >= 1000000) {
-    return "$" + (value / 1000000).toFixed(2) + "M";
+    // For millions, show as $X.XM with one decimal place
+    return "$" + (value / 1000000).toFixed(1) + "M";
   } else {
-    return "$" + (value / 1000).toFixed(1) + "K";
+    // For thousands, show as $XXXK with no decimal places
+    return "$" + (value / 1000).toFixed(0) + "K";
   }
 }
 

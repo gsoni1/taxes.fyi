@@ -6,12 +6,15 @@ body {
 }
 
 .container {
+  font-family: SF Pro Rounded, sans-serif;
+  font-weight: thin;
+  color: #4c5d67;
   width: 300px;
   padding: 16px;
 }
 
 h1 {
-  color: #2e7d32;
+  color: #4c5d67;
   font-size: 24px;
   margin-top: 0;
   margin-bottom: 8px;
@@ -45,7 +48,8 @@ select {
 }
 
 button {
-  background-color: #2e7d32;
+  /* background-color: #2e7d32; */
+  background-color: #4c5d67;
   color: white;
   border: none;
   padding: 10px 16px;
@@ -58,7 +62,9 @@ button {
 }
 
 button:hover {
-  background-color: #1b5e20;
+  /* background-color: #1b5e20; */
+  background-color: #4c5d67;
+  opacity: 0.8;
 }
 
 .checkbox-group {
@@ -89,9 +95,11 @@ button:hover {
 
 .status.success {
   display: block;
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
+  /* background-color: #e8f5e9; */
+  background-color: #ffffff;
+  
+  color: #4c5d67;
+  border: 1px solid #4c5d67;
 }
 
 .status.error {
@@ -112,7 +120,9 @@ button:hover {
 .info p {
   margin: 0 0 8px 0;
   font-size: 12px;
-  color: #0d47a1;
+  /* color: #0d47a1; */
+  color: #0060b9;
+  
 }
 
 .info p:last-child {

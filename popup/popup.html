@@ -6,7 +6,8 @@
 </head>
 <body>
   <div class="container">
-    <h1>Taxes.fyi</h1>
+    <h1>taxes.fyi</h1> 
+    <img src="../images/icon48.png" alt="taxes.fyi logo">
     <p>Configure your tax settings below:</p>
     
     <div class="form-group">
@@ -19,6 +20,13 @@
         <option value="VA">Virginia</option>
         <option value="MA">Massachusetts</option>
         <option value="GA">Georgia</option>
+      </select>
+    </div>
+    
+    <div class="form-group" id="localTaxContainer" style="display: none;">
+      <label for="localTax">Local Tax:</label>
+      <select id="localTax">
+        <!-- Options will be populated dynamically based on state selection -->
       </select>
     </div>
     
