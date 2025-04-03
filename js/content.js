@@ -25,10 +25,12 @@ chrome.storage.sync.get(['taxSettings', 'columnSettings'], function(result) {
   document.addEventListener('DOMContentLoaded', function() {
     console.log('Taxes.fyi: DOM fully loaded');
     setTimeout(addAfterTaxColumn, 1000); // Wait a bit for any dynamic content
+    setTimeout(addAfterTaxDetailedColumn, 1000); // Initial run for detailed tables
   });
   
   // Also run now in case DOMContentLoaded already fired
   setTimeout(addAfterTaxColumn, 1000);
+  setTimeout(addAfterTaxDetailedColumn, 1000);
 });
 
 // Tax calculation functions
@@ -703,6 +705,7 @@ const observer = new MutationObserver(function(mutations) {
   if (shouldCheck) {
     console.log('Taxes.fyi: New table detected, checking for modifications...');
     setTimeout(addAfterTaxColumn, 1000);
+    setTimeout(addAfterTaxDetailedColumn, 1000);
   }
   
   if (shouldUpdateStyles) {
@@ -999,4 +1002,124 @@ const compensationObserver = new MutationObserver((mutations) => {
 compensationObserver.observe(document.body, {
     childList: true,
     subtree: true
+});
+
+// Function to add After Tax column for detailed compensation tables
+function addAfterTaxDetailedColumn() {
+  console.log('Taxes.fyi: Looking for detailed compensation tables...');
+  
+  // Find tables with detailed compensation headers
+  const detailedHeaders = document.querySelectorAll('th .salary-table_sortTableHeaderText__ZYL7k');
+  
+  detailedHeaders.forEach((header, index) => {
+    if (header.textContent.includes('Total Compensation')) {
+      const headerCell = header.closest('th');
+      const table = headerCell.closest('table');
+      const headerRow = headerCell.closest('tr');
+      
+      // Check if we already added the column
+      const existingDetailedHeader = Array.from(headerRow.querySelectorAll('th'))
+        .find(th => th.querySelector('.salary-table_sortTableHeaderText__ZYL7k')?.textContent.includes('After Tax'));
+      
+      if (existingDetailedHeader) {
+        return;
+      }
+      
+      // Create new header cell
+      const newHeaderCell = document.createElement('th');
+      newHeaderCell.className = headerCell.className;
+      newHeaderCell.setAttribute('scope', 'col');
+      
+      // Create header content
+      const sortLabel = document.createElement('span');
+      sortLabel.className = 'MuiButtonBase-root MuiTableSortLabel-root css-1x860jj';
+      sortLabel.setAttribute('tabindex', '0');
+      sortLabel.setAttribute('role', 'button');
+      
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'salary-table_sortTableHeader__9OJDE';
+      
+      const headerText = document.createElement('p');
+      headerText.className = 'MuiTypography-root MuiTypography-body2 salary-table_sortTableHeaderText__ZYL7k css-2o2hpw';
+      
+      const stateAbbr = taxSettings.state;
+      const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                              taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+      
+      headerText.textContent = `After Tax `;
+      
+      const currencyButton = document.createElement('button');
+      currencyButton.type = 'button';
+      currencyButton.className = 'salary-table_currencyLabel__4PkwP';
+      currencyButton.textContent = '';
+      
+      headerText.appendChild(currencyButton);
+      headerDiv.appendChild(headerText);
+      
+      const subText = document.createElement('span');
+      subText.className = 'MuiTypography-root MuiTypography-caption css-12nofzu';
+      subText.textContent = `(${stateAbbr}, ${filingStatusAbbr})`;
+      headerDiv.appendChild(subText);
+      
+      sortLabel.appendChild(headerDiv);
+      newHeaderCell.appendChild(sortLabel);
+      
+      // Insert the new header cell
+      headerCell.parentNode.insertBefore(newHeaderCell, headerCell.nextSibling);
+      
+      // Add after-tax values to each row
+      const rows = table.querySelectorAll('tbody tr');
+      const headerIndex = Array.from(headerRow.children).indexOf(headerCell);
+      
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (headerIndex >= cells.length) return;
+        
+        const totalCell = cells[headerIndex];
+        const totalText = totalCell.textContent.trim();
+        const totalValue = parseSalaryString(totalText);
+        
+        // Calculate after-tax value
+        let afterTaxValue = totalValue;
+        if (totalValue > 0) {
+          const totalTax = calculateTotalTax(totalValue);
+          afterTaxValue = totalValue - totalTax;
+        }
+        
+        // Create new cell with the same styling
+        const newCell = document.createElement('td');
+        newCell.className = totalCell.className;
+        newCell.textContent = formatSalary(afterTaxValue);
+        
+        // Insert the new cell
+        if (headerIndex + 1 < cells.length) {
+          row.insertBefore(newCell, cells[headerIndex + 1]);
+        } else {
+          row.appendChild(newCell);
+        }
+      });
+    }
+  });
+}
+
+// Add observer for detailed compensation tables
+const detailedTableObserver = new MutationObserver((mutations) => {
+  mutations.forEach(mutation => {
+    if (mutation.type === 'childList') {
+      const addedNodes = Array.from(mutation.addedNodes);
+      const hasDetailedTable = addedNodes.some(node => 
+        node.nodeType === 1 && node.querySelector?.('.salary-table_sortTableHeaderText__ZYL7k')
+      );
+      
+      if (hasDetailedTable) {
+        setTimeout(addAfterTaxDetailedColumn, 500);
+      }
+    }
+  });
+});
+
+// Start observing for detailed tables
+detailedTableObserver.observe(document.body, {
+  childList: true,
+  subtree: true
 });
