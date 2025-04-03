@@ -907,7 +907,6 @@ function duplicateCompensationElements() {
         return; // Exit if we already added the elements
     }
 
-    // Find the elements
     const labelElement = document.querySelector('dt.level_breakdownLabel__SYlC4');
     const valueElement = document.querySelector('dd.level_totalComp__dFDpB');
 
@@ -919,42 +918,50 @@ function duplicateCompensationElements() {
         // Change the text of the cloned label to "After Tax"
         labelClone.textContent = "After Tax";
 
-        // Calculate after-tax value
-        const totalSalary = parseSalaryString(valueElement.textContent);
-        let afterTaxSalary = totalSalary;
-        if (totalSalary > 0) {
-            const totalTax = calculateTotalTax(totalSalary);
-            afterTaxSalary = totalSalary - totalTax;
-        }
+        // Function to update after-tax value
+        const updateAfterTaxValue = () => {
+            const totalSalary = parseSalaryString(valueElement.textContent);
+            let afterTaxSalary = totalSalary;
+            if (totalSalary > 0) {
+                const totalTax = calculateTotalTax(totalSalary);
+                afterTaxSalary = totalSalary - totalTax;
+            }
+            valueClone.textContent = formatExactSalary(afterTaxSalary);
+        };
 
-        // Update the cloned value element with exact after-tax amount
-        valueClone.textContent = formatExactSalary(afterTaxSalary);
-
-        // Insert first clone (label) after the value element
+        // Insert clones into DOM
         valueElement.parentNode.insertBefore(labelClone, valueElement.nextSibling);
-        // Insert second clone (value) after the new label clone
         labelClone.parentNode.insertBefore(valueClone, labelClone.nextSibling);
 
-        // Set up observer for the original value element
+        // Initial update once settings are loaded
+        chrome.storage.sync.get(['taxSettings'], function(result) {
+            if (result.taxSettings) {
+                taxSettings = result.taxSettings;
+                updateAfterTaxValue();
+            }
+        });
+
+        // Set up observer for value changes
         const valueObserver = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === 'characterData' || mutation.type === 'childList') {
-                    const newTotalSalary = parseSalaryString(valueElement.textContent);
-                    let newAfterTaxSalary = newTotalSalary;
-                    if (newTotalSalary > 0) {
-                        const newTotalTax = calculateTotalTax(newTotalSalary);
-                        newAfterTaxSalary = newTotalSalary - newTotalTax;
-                    }
-                    valueClone.textContent = formatExactSalary(newAfterTaxSalary);
+                    updateAfterTaxValue();
                 }
             });
         });
 
-        // Observe both the element itself and its children
         valueObserver.observe(valueElement, {
             characterData: true,
             childList: true,
             subtree: true
+        });
+
+        // Listen for settings changes
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+            if (namespace === 'sync' && changes.taxSettings) {
+                taxSettings = changes.taxSettings.newValue;
+                updateAfterTaxValue();
+            }
         });
     }
 }
@@ -967,7 +974,13 @@ const compensationObserver = new MutationObserver((mutations) => {
             const valueElement = document.querySelector('dd.level_totalComp__dFDpB');
             
             if (labelElement && valueElement) {
-                duplicateCompensationElements();
+                // Wait for settings to be loaded before adding elements
+                chrome.storage.sync.get(['taxSettings'], function(result) {
+                    if (result.taxSettings) {
+                        taxSettings = result.taxSettings;
+                        duplicateCompensationElements();
+                    }
+                });
             }
         }
     }
