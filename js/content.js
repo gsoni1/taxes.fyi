@@ -900,6 +900,12 @@ function updateAllAfterTaxValues() {
 }
 
 function duplicateCompensationElements() {
+    // First check if we already added the after-tax elements
+    const existingAfterTaxLabel = Array.from(document.querySelectorAll('dt.level_breakdownLabel__SYlC4'))
+        .find(el => el.textContent === "After Tax");
+    if (existingAfterTaxLabel) {
+        return; // Exit if we already added the elements
+    }
 
     // Find the elements
     const labelElement = document.querySelector('dt.level_breakdownLabel__SYlC4');
@@ -953,5 +959,22 @@ function duplicateCompensationElements() {
     }
 }
 
-// Run when page is fully loaded
-window.addEventListener('load', duplicateCompensationElements);
+// Set up a separate observer for compensation elements
+const compensationObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+            const labelElement = document.querySelector('dt.level_breakdownLabel__SYlC4');
+            const valueElement = document.querySelector('dd.level_totalComp__dFDpB');
+            
+            if (labelElement && valueElement) {
+                duplicateCompensationElements();
+            }
+        }
+    }
+});
+
+// Start observing the document for compensation elements
+compensationObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
