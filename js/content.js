@@ -902,7 +902,7 @@ function updateAllAfterTaxValues() {
 function duplicateCompensationElements() {
     // First check if we already added the after-tax elements
     const existingAfterTaxLabel = Array.from(document.querySelectorAll('dt.level_breakdownLabel__SYlC4'))
-        .find(el => el.textContent === "After Tax");
+        .find(el => el.textContent.startsWith("After Tax"));
     if (existingAfterTaxLabel) {
         return; // Exit if we already added the elements
     }
@@ -915,8 +915,16 @@ function duplicateCompensationElements() {
         const labelClone = labelElement.cloneNode(true);
         const valueClone = valueElement.cloneNode(true);
 
-        // Change the text of the cloned label to "After Tax"
-        labelClone.textContent = "After Tax";
+        // Function to update label text with current settings
+        const updateLabelText = () => {
+            const stateAbbr = taxSettings.state;
+            const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                                   taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+            labelClone.textContent = `After Tax (${stateAbbr}, ${filingStatusAbbr})`;
+        };
+
+        // Set initial label text
+        updateLabelText();
 
         // Function to update after-tax value
         const updateAfterTaxValue = () => {
@@ -960,6 +968,7 @@ function duplicateCompensationElements() {
         chrome.storage.onChanged.addListener((changes, namespace) => {
             if (namespace === 'sync' && changes.taxSettings) {
                 taxSettings = changes.taxSettings.newValue;
+                updateLabelText();
                 updateAfterTaxValue();
             }
         });
