@@ -330,20 +330,66 @@ function calculateLocalTax(salary, state, localTax, filingStatus) {
   return 0;
 }
 
-function calculateTotalTax(salary) {
+// Add new helper function to parse location data
+function parseLocationFromRow(row) {
+  const locationSpan = row.querySelector('.MuiTypography-caption.css-xlmjpr');
+  if (!locationSpan) return null;
+  
+  const locationText = locationSpan.textContent;
+  const city = locationText.split(',')[0].trim();
+  const state = locationText.split(',')[1]?.split('|')[0]?.trim();
+  
+  return { city, state };
+}
+
+// Modify calculateTotalTax to accept location parameter
+function calculateTotalTax(salary, location = null) {
+  // If no location provided, use default settings
+  if (!location) {
+    const federalTax = calculateFederalTax(salary, taxSettings.filingStatus);
+    const stateTax = calculateStateTax(salary, taxSettings.state, taxSettings.filingStatus);
+    const localTax = calculateLocalTax(salary, taxSettings.state, taxSettings.localTax, taxSettings.filingStatus);
+    const ficaTax = calculateFICATax(salary);
+    
+    if (taxSettings.state === 'NY') {
+      return federalTax + stateTax + localTax + ficaTax + 17000;
+    } else if (taxSettings.state === 'CA' && taxSettings.localTax === 'sf') {
+      return federalTax + stateTax + localTax + ficaTax + 2500;
+    } else {
+      return federalTax + stateTax + localTax + ficaTax;
+    }
+  }
+  
+  // Use location-specific calculation
   const federalTax = calculateFederalTax(salary, taxSettings.filingStatus);
-  const stateTax = calculateStateTax(salary, taxSettings.state, taxSettings.filingStatus);
-  const localTax = calculateLocalTax(salary, taxSettings.state, taxSettings.localTax, taxSettings.filingStatus);
+  const stateTax = calculateStateTax(salary, location.state, taxSettings.filingStatus);
   const ficaTax = calculateFICATax(salary);
-  if (taxSettings.state == 'NY') {
-    return federalTax + stateTax + localTax + ficaTax + 17000;
+  
+  // Handle location-specific cases
+  if (location.state === 'CA') {
+    if (location.city === 'San Francisco') {
+      const sfTax = salary > 150000 ? (salary - 150000) * 0.015 : 0;
+      return federalTax + stateTax + sfTax + ficaTax + 2500;
+    } else {
+      return federalTax + stateTax + ficaTax;
+    }
+  } else if (location.state === 'NY') {
+    if (location.city === 'New York') {
+      const nycTax = calculateLocalTax(salary, 'NY', 'nyc', taxSettings.filingStatus);
+      return federalTax + stateTax + nycTax + ficaTax + 17000;
+    } else {
+      return federalTax + stateTax + ficaTax + 17000;
+    }
   }
-  else if (taxSettings.state == 'CA' && taxSettings.localTax === 'sf') {
-    return federalTax + stateTax + localTax + ficaTax + 2500;
+  
+  // For other supported states, just use federal + state + FICA
+  const supportedStates = ['TX', 'WA', 'VA', 'MA', 'GA'];
+  if (supportedStates.includes(location.state)) {
+    return federalTax + stateTax + ficaTax;
   }
-  else {
-    return federalTax + stateTax + localTax + ficaTax;
-  }
+  
+  // Return null for unsupported states
+  return null;
 }
 
 // Function to parse salary strings like "$128K" or "$1.05M"
@@ -486,9 +532,14 @@ function addAfterTaxColumn() {
         
         // Calculate after-tax salary
         let afterTaxSalary = totalSalary;
-        if (totalSalary > 0) {
-          const totalTax = calculateTotalTax(totalSalary);
-          afterTaxSalary = totalSalary - totalTax;
+        const location = parseLocationFromRow(row);
+        if (totalSalary > 0 && location) {
+          const totalTax = calculateTotalTax(totalSalary, location);
+          if (totalTax !== null) {
+            afterTaxSalary = totalSalary - totalTax;
+          } else {
+            return;
+          }
         }
         
         // Create the new cell
@@ -633,11 +684,19 @@ function updateAfterTaxValues() {
         const totalSalaryText = totalValueElement.textContent;
         const totalSalary = parseSalaryString(totalSalaryText);
         
-        // Calculate after-tax salary
+        const location = parseLocationFromRow(row);
+        
+        // Calculate after-tax salary only if we have a supported location
         let afterTaxSalary = totalSalary;
-        if (totalSalary > 0) {
-          const totalTax = calculateTotalTax(totalSalary);
-          afterTaxSalary = totalSalary - totalTax;
+        if (totalSalary > 0 && location) {
+          const totalTax = calculateTotalTax(totalSalary, location);
+          if (totalTax !== null) {
+            afterTaxSalary = totalSalary - totalTax;
+          } else {
+            // Remove after-tax cell if location not supported
+            afterTaxCell.remove();
+            return;
+          }
         }
         
         // Check if the Total value is bold (has the css-xj4mea class)
@@ -843,11 +902,17 @@ function updateAllAfterTaxValues() {
       const totalSalaryText = totalValueElement.textContent;
       const totalSalary = parseSalaryString(totalSalaryText);
       
-      // Calculate after-tax salary
+      const location = parseLocationFromRow(row);
+      
+      // Calculate after-tax salary only if we have a supported location
       let afterTaxSalary = totalSalary;
-      if (totalSalary > 0) {
-        const totalTax = calculateTotalTax(totalSalary);
-        afterTaxSalary = totalSalary - totalTax;
+      if (totalSalary > 0 && location) {
+        const totalTax = calculateTotalTax(totalSalary, location);
+        if (totalTax !== null) {
+          afterTaxSalary = totalSalary - totalTax;
+        } else {
+          return;
+        }
       }
       
       // Check if the Total value is bold
@@ -1058,7 +1123,7 @@ function addAfterTaxDetailedColumn() {
       
       const subText = document.createElement('span');
       subText.className = 'MuiTypography-root MuiTypography-caption css-12nofzu';
-      subText.textContent = `(${stateAbbr}, ${filingStatusAbbr})`;
+      subText.textContent = ``;
       headerDiv.appendChild(subText);
       
       sortLabel.appendChild(headerDiv);
@@ -1081,12 +1146,22 @@ function addAfterTaxDetailedColumn() {
         if (!totalValueElement) return;
         
         const totalValue = parseSalaryString(totalValueElement.textContent);
+        const location = parseLocationFromRow(row);
         
-        // Calculate after-tax values
+        // Calculate after-tax values if we have a supported location
         let afterTaxTotal = totalValue;
-        if (totalValue > 0) {
-          const totalTax = calculateTotalTax(totalValue);
-          afterTaxTotal = totalValue - totalTax;
+        if (totalValue > 0 && location) {
+          const totalTax = calculateTotalTax(totalValue, location);
+          // Only show after-tax value if we can calculate it for this location
+          if (totalTax !== null) {
+            afterTaxTotal = totalValue - totalTax;
+          } else {
+            // Skip this row if location not supported
+            return;
+          }
+        } else {
+          // Skip this row if no location data
+          return;
         }
         
         // Create new cell with same structure but without details
