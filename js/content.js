@@ -296,11 +296,11 @@ function calculateLocalTax(salary, state, localTax, filingStatus) {
         if (taxableIncome <= 21600) {
           localTaxAmount = taxableIncome * 0.03078;
         } else if (taxableIncome <= 45000) {
-          localTaxAmount = 665 + ((taxableIncome - 21600) * 0.03762);
+          localTaxAmount = 665 + ((taxableIncome - 21600) * 0.03762) - 17000;
         } else if (taxableIncome <= 90000) {
-          localTaxAmount = 1545 + ((taxableIncome - 45000) * 0.03819);
+          localTaxAmount = 1545 + ((taxableIncome - 45000) * 0.03819) - 17000;
         } else {
-          localTaxAmount = 3264 + ((taxableIncome - 90000) * 0.03876);
+          localTaxAmount = 3264 + ((taxableIncome - 90000) * 0.03876) - 17000;
         }
       } else { // Head of Household
         if (taxableIncome <= 14400) {
@@ -336,7 +336,7 @@ function calculateTotalTax(salary) {
   if (taxSettings.state == 'NY') {
     return federalTax + stateTax + localTax + ficaTax + 17000;
   }
-  else if (taxSettings.state == 'CA' && taxSettings.localTax == 'sf') {
+  else if (taxSettings.state == 'CA' && taxSettings.localTax === 'sf') {
     return federalTax + stateTax + localTax + ficaTax + 2500;
   }
   else {
@@ -378,6 +378,12 @@ function formatSalary(value) {
     // For thousands, show as $XXXK with no decimal places
     return "$" + (value / 1000).toFixed(0) + "K";
   }
+}
+
+// Function to format salary with exact dollars
+function formatExactSalary(value) {
+    if (value === 0) return "$ --";
+    return `$${Math.round(value).toLocaleString()}`;
 }
 
 // Main function to add the After Tax column
@@ -892,3 +898,60 @@ function updateAllAfterTaxValues() {
     });
   });
 }
+
+function duplicateCompensationElements() {
+
+    // Find the elements
+    const labelElement = document.querySelector('dt.level_breakdownLabel__SYlC4');
+    const valueElement = document.querySelector('dd.level_totalComp__dFDpB');
+
+    if (labelElement && valueElement) {
+        // Create clones
+        const labelClone = labelElement.cloneNode(true);
+        const valueClone = valueElement.cloneNode(true);
+
+        // Change the text of the cloned label to "After Tax"
+        labelClone.textContent = "After Tax";
+
+        // Calculate after-tax value
+        const totalSalary = parseSalaryString(valueElement.textContent);
+        let afterTaxSalary = totalSalary;
+        if (totalSalary > 0) {
+            const totalTax = calculateTotalTax(totalSalary);
+            afterTaxSalary = totalSalary - totalTax;
+        }
+
+        // Update the cloned value element with exact after-tax amount
+        valueClone.textContent = formatExactSalary(afterTaxSalary);
+
+        // Insert first clone (label) after the value element
+        valueElement.parentNode.insertBefore(labelClone, valueElement.nextSibling);
+        // Insert second clone (value) after the new label clone
+        labelClone.parentNode.insertBefore(valueClone, labelClone.nextSibling);
+
+        // Set up observer for the original value element
+        const valueObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'characterData' || mutation.type === 'childList') {
+                    const newTotalSalary = parseSalaryString(valueElement.textContent);
+                    let newAfterTaxSalary = newTotalSalary;
+                    if (newTotalSalary > 0) {
+                        const newTotalTax = calculateTotalTax(newTotalSalary);
+                        newAfterTaxSalary = newTotalSalary - newTotalTax;
+                    }
+                    valueClone.textContent = formatExactSalary(newAfterTaxSalary);
+                }
+            });
+        });
+
+        // Observe both the element itself and its children
+        valueObserver.observe(valueElement, {
+            characterData: true,
+            childList: true,
+            subtree: true
+        });
+    }
+}
+
+// Run when page is fully loaded
+window.addEventListener('load', duplicateCompensationElements);
