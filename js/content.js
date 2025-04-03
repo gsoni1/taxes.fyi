@@ -1077,9 +1077,8 @@ function addAfterTaxDetailedColumn() {
         
         const totalCell = cells[headerIndex];
         const totalValueElement = totalCell.querySelector('.MuiTypography-body1');
-        const totalDetailsElement = totalCell.querySelector('.MuiTypography-caption');
         
-        if (!totalValueElement || !totalDetailsElement) return;
+        if (!totalValueElement) return;
         
         const totalValue = parseSalaryString(totalValueElement.textContent);
         
@@ -1090,7 +1089,7 @@ function addAfterTaxDetailedColumn() {
           afterTaxTotal = totalValue - totalTax;
         }
         
-        // Create new cell with exact same structure
+        // Create new cell with same structure but without details
         const newCell = document.createElement('td');
         newCell.className = 'MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeMedium salary-row_totalCompCell__553Rk css-1b6bj08';
         
@@ -1105,12 +1104,7 @@ function addAfterTaxDetailedColumn() {
         mainValue.className = 'MuiTypography-root MuiTypography-body1 css-4g68tt';
         mainValue.textContent = formatExactSalary(afterTaxTotal);
         
-        const details = document.createElement('span');
-        details.className = 'MuiTypography-caption css-b4wlzm';
-        details.textContent = totalDetailsElement.textContent; // Keep same breakdown values
-        
         contentBox.appendChild(mainValue);
-        contentBox.appendChild(details);
         outerBox.appendChild(emptyDiv);
         outerBox.appendChild(contentBox);
         newCell.appendChild(outerBox);
