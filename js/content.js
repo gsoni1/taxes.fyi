@@ -1025,7 +1025,7 @@ function addAfterTaxDetailedColumn() {
         return;
       }
       
-      // Create new header cell
+      // Create new header cell with same styling as original
       const newHeaderCell = document.createElement('th');
       newHeaderCell.className = headerCell.className;
       newHeaderCell.setAttribute('scope', 'col');
@@ -1076,20 +1076,44 @@ function addAfterTaxDetailedColumn() {
         if (headerIndex >= cells.length) return;
         
         const totalCell = cells[headerIndex];
-        const totalText = totalCell.textContent.trim();
-        const totalValue = parseSalaryString(totalText);
+        const totalValueElement = totalCell.querySelector('.MuiTypography-body1');
+        const totalDetailsElement = totalCell.querySelector('.MuiTypography-caption');
         
-        // Calculate after-tax value
-        let afterTaxValue = totalValue;
+        if (!totalValueElement || !totalDetailsElement) return;
+        
+        const totalValue = parseSalaryString(totalValueElement.textContent);
+        
+        // Calculate after-tax values
+        let afterTaxTotal = totalValue;
         if (totalValue > 0) {
           const totalTax = calculateTotalTax(totalValue);
-          afterTaxValue = totalValue - totalTax;
+          afterTaxTotal = totalValue - totalTax;
         }
         
-        // Create new cell with the same styling
+        // Create new cell with exact same structure
         const newCell = document.createElement('td');
-        newCell.className = totalCell.className;
-        newCell.textContent = formatSalary(afterTaxValue);
+        newCell.className = 'MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeMedium salary-row_totalCompCell__553Rk css-1b6bj08';
+        
+        const outerBox = document.createElement('div');
+        outerBox.className = 'MuiBox-root css-77dmha';
+        
+        const emptyDiv = document.createElement('div');
+        const contentBox = document.createElement('div');
+        contentBox.className = 'MuiBox-root css-0';
+        
+        const mainValue = document.createElement('p');
+        mainValue.className = 'MuiTypography-root MuiTypography-body1 css-4g68tt';
+        mainValue.textContent = formatExactSalary(afterTaxTotal);
+        
+        const details = document.createElement('span');
+        details.className = 'MuiTypography-caption css-b4wlzm';
+        details.textContent = totalDetailsElement.textContent; // Keep same breakdown values
+        
+        contentBox.appendChild(mainValue);
+        contentBox.appendChild(details);
+        outerBox.appendChild(emptyDiv);
+        outerBox.appendChild(contentBox);
+        newCell.appendChild(outerBox);
         
         // Insert the new cell
         if (headerIndex + 1 < cells.length) {
