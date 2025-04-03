@@ -530,16 +530,11 @@ function addAfterTaxColumn() {
         const totalSalaryText = totalValueElement.textContent;
         const totalSalary = parseSalaryString(totalSalaryText);
         
-        // Calculate after-tax salary
+        // Calculate after-tax salary using popup settings
         let afterTaxSalary = totalSalary;
-        const location = parseLocationFromRow(row);
-        if (totalSalary > 0 && location) {
-          const totalTax = calculateTotalTax(totalSalary, location);
-          if (totalTax !== null) {
-            afterTaxSalary = totalSalary - totalTax;
-          } else {
-            return;
-          }
+        if (totalSalary > 0) {
+          const totalTax = calculateTotalTax(totalSalary); // Use default settings from popup
+          afterTaxSalary = totalSalary - totalTax;
         }
         
         // Create the new cell
@@ -550,7 +545,6 @@ function addAfterTaxColumn() {
         const isTotalBold = totalValueElement.className.includes('css-xj4mea');
         
         const valueElement = document.createElement('h6');
-        // Use the same class as the Total value, including the bold class if present
         valueElement.className = isTotalBold ? 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea' : totalValueElement.className;
         valueElement.textContent = formatSalary(afterTaxSalary);
         
@@ -902,17 +896,11 @@ function updateAllAfterTaxValues() {
       const totalSalaryText = totalValueElement.textContent;
       const totalSalary = parseSalaryString(totalSalaryText);
       
-      const location = parseLocationFromRow(row);
-      
-      // Calculate after-tax salary only if we have a supported location
+      // Calculate after-tax salary using popup settings
       let afterTaxSalary = totalSalary;
-      if (totalSalary > 0 && location) {
-        const totalTax = calculateTotalTax(totalSalary, location);
-        if (totalTax !== null) {
-          afterTaxSalary = totalSalary - totalTax;
-        } else {
-          return;
-        }
+      if (totalSalary > 0) {
+        const totalTax = calculateTotalTax(totalSalary); // Use default settings from popup
+        afterTaxSalary = totalSalary - totalTax;
       }
       
       // Check if the Total value is bold
