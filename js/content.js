@@ -1136,23 +1136,7 @@ function addAfterTaxDetailedColumn() {
         const totalValue = parseSalaryString(totalValueElement.textContent);
         const location = parseLocationFromRow(row);
         
-        // Calculate after-tax values if we have a supported location
-        let afterTaxTotal = totalValue;
-        if (totalValue > 0 && location) {
-          const totalTax = calculateTotalTax(totalValue, location);
-          // Only show after-tax value if we can calculate it for this location
-          if (totalTax !== null) {
-            afterTaxTotal = totalValue - totalTax;
-          } else {
-            // Skip this row if location not supported
-            return;
-          }
-        } else {
-          // Skip this row if no location data
-          return;
-        }
-        
-        // Create new cell with same structure but without details
+        // Create new cell with same structure
         const newCell = document.createElement('td');
         newCell.className = 'MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeMedium salary-row_totalCompCell__553Rk css-1b6bj08';
         
@@ -1165,7 +1149,18 @@ function addAfterTaxDetailedColumn() {
         
         const mainValue = document.createElement('p');
         mainValue.className = 'MuiTypography-root MuiTypography-body1 css-4g68tt';
-        mainValue.textContent = formatExactSalary(afterTaxTotal);
+        
+        // Calculate after-tax value or show $--- for unsupported locations
+        if (totalValue > 0 && location) {
+          const totalTax = calculateTotalTax(totalValue, location);
+          if (totalTax !== null) {
+            mainValue.textContent = formatExactSalary(totalValue - totalTax);
+          } else {
+            mainValue.textContent = '$---';
+          }
+        } else {
+          mainValue.textContent = '$---';
+        }
         
         contentBox.appendChild(mainValue);
         outerBox.appendChild(emptyDiv);
