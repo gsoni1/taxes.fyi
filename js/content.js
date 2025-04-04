@@ -1328,7 +1328,143 @@ function duplicatePercentileElements() {
     }
 }
 
-// Modify medianObserver to also check for percentile elements
+// Function to duplicate 75th percentile elements and show after-tax values
+function duplicate75thPercentileElements() {
+    // Check if we already added the after-tax elements
+    const existingAfterTax75thPercentile = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
+        .find(el => el.textContent.includes('After Tax 75th%'));
+    if (existingAfterTax75thPercentile) {
+        return;
+    }
+
+    // Find all percentile bars and get the third one (75th)
+    const allBars = document.querySelectorAll('.percentiles_percentileBar___ll7Y');
+    const barElement = Array.from(allBars).find((bar, index) => {
+        const nextLabel = bar.parentNode.querySelector('.percentiles_percentileLabel__8qVrS');
+        return nextLabel && nextLabel.textContent.includes('75th%');
+    });
+
+    if (!barElement) return;
+
+    // Find corresponding amount and label elements
+    const container = barElement.parentNode;
+    const amountElement = container.querySelector('.css-es1xmb');
+    const labelElement = container.querySelector('.percentiles_percentileLabel__8qVrS');
+
+    if (barElement && amountElement && labelElement) {
+        // Create clones
+        const barClone = barElement.cloneNode(true);
+        const amountClone = amountElement.cloneNode(true);
+        const labelClone = labelElement.cloneNode(true);
+
+        // Update label text
+        labelClone.textContent = 'After Tax 75th%';
+
+        // Calculate after-tax amount
+        const totalSalary = parseSalaryString(amountElement.textContent);
+        if (totalSalary > 0) {
+            const totalTax = calculateTotalTax(totalSalary);
+            const afterTaxSalary = totalSalary - totalTax;
+            amountClone.textContent = formatExactSalary(afterTaxSalary);
+
+            // Adjust the bar width to reflect the after-tax amount
+            const ratio = afterTaxSalary / totalSalary;
+            const originalWidth = window.getComputedStyle(barElement).width;
+            barClone.style.width = `${parseFloat(originalWidth) * ratio}px`;
+        }
+
+        // Insert clones after original elements
+        container.insertBefore(barClone, labelElement.nextSibling);
+        container.insertBefore(amountClone, barClone.nextSibling);
+        container.insertBefore(labelClone, amountClone.nextSibling);
+
+        // Listen for settings changes
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+            if (namespace === 'sync' && changes.taxSettings) {
+                if (totalSalary > 0) {
+                    const newTotalTax = calculateTotalTax(totalSalary);
+                    const newAfterTaxSalary = totalSalary - newTotalTax;
+                    amountClone.textContent = formatExactSalary(newAfterTaxSalary);
+                    
+                    // Update bar width
+                    const ratio = newAfterTaxSalary / totalSalary;
+                    const originalWidth = window.getComputedStyle(barElement).width;
+                    barClone.style.width = `${parseFloat(originalWidth) * ratio}px`;
+                }
+            }
+        });
+    }
+}
+
+// Function to duplicate 90th percentile elements and show after-tax values
+function duplicate90thPercentileElements() {
+    // Check if we already added the after-tax elements
+    const existingAfterTax90thPercentile = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
+        .find(el => el.textContent.includes('After Tax 90th%'));
+    if (existingAfterTax90thPercentile) {
+        return;
+    }
+
+    // Find all percentile bars and get the fourth one (90th)
+    const allBars = document.querySelectorAll('.percentiles_percentileBar___ll7Y');
+    const barElement = Array.from(allBars).find((bar, index) => {
+        const nextLabel = bar.parentNode.querySelector('.percentiles_percentileLabel__8qVrS');
+        return nextLabel && nextLabel.textContent.includes('90th%');
+    });
+
+    if (!barElement) return;
+
+    // Find corresponding amount and label elements
+    const container = barElement.parentNode;
+    const amountElement = container.querySelector('.css-es1xmb');
+    const labelElement = container.querySelector('.percentiles_percentileLabel__8qVrS');
+
+    if (barElement && amountElement && labelElement) {
+        // Create clones
+        const barClone = barElement.cloneNode(true);
+        const amountClone = amountElement.cloneNode(true);
+        const labelClone = labelElement.cloneNode(true);
+
+        // Update label text
+        labelClone.textContent = 'After Tax 90th%';
+
+        // Calculate after-tax amount
+        const totalSalary = parseSalaryString(amountElement.textContent);
+        if (totalSalary > 0) {
+            const totalTax = calculateTotalTax(totalSalary);
+            const afterTaxSalary = totalSalary - totalTax;
+            amountClone.textContent = formatExactSalary(afterTaxSalary);
+
+            // Adjust the bar width to reflect the after-tax amount
+            const ratio = afterTaxSalary / totalSalary;
+            const originalWidth = window.getComputedStyle(barElement).width;
+            barClone.style.width = `${parseFloat(originalWidth) * ratio}px`;
+        }
+
+        // Insert clones after original elements
+        container.insertBefore(barClone, labelElement.nextSibling);
+        container.insertBefore(amountClone, barClone.nextSibling);
+        container.insertBefore(labelClone, amountClone.nextSibling);
+
+        // Listen for settings changes
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+            if (namespace === 'sync' && changes.taxSettings) {
+                if (totalSalary > 0) {
+                    const newTotalTax = calculateTotalTax(totalSalary);
+                    const newAfterTaxSalary = totalSalary - newTotalTax;
+                    amountClone.textContent = formatExactSalary(newAfterTaxSalary);
+                    
+                    // Update bar width
+                    const ratio = newAfterTaxSalary / totalSalary;
+                    const originalWidth = window.getComputedStyle(barElement).width;
+                    barClone.style.width = `${parseFloat(originalWidth) * ratio}px`;
+                }
+            }
+        });
+    }
+}
+
+// Modify medianObserver to check for all percentile elements
 const medianObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
         if (mutation.type === 'childList') {
@@ -1345,15 +1481,21 @@ const medianObserver = new MutationObserver((mutations) => {
                 });
             }
 
-            // Check for percentile elements
-            const percentileBar = document.querySelector('.percentiles_percentileBar___ll7Y');
-            const percentileAmount = document.querySelector('.percentiles_percentileBar___ll7Y + .css-es1xmb');
+            // Check for all percentile elements
+            const allBars = document.querySelectorAll('.percentiles_percentileBar___ll7Y');
+            const labels = document.querySelectorAll('.percentiles_percentileLabel__8qVrS');
             
-            if (percentileBar && percentileAmount) {
+            const has25thPercentile = Array.from(labels).some(label => label.textContent.includes('25th%'));
+            const has75thPercentile = Array.from(labels).some(label => label.textContent.includes('75th%'));
+            const has90thPercentile = Array.from(labels).some(label => label.textContent.includes('90th%'));
+            
+            if (has25thPercentile || has75thPercentile || has90thPercentile) {
                 chrome.storage.sync.get(['taxSettings'], function(result) {
                     if (result.taxSettings) {
                         taxSettings = result.taxSettings;
-                        duplicatePercentileElements();
+                        if (has25thPercentile) duplicatePercentileElements();
+                        if (has75thPercentile) duplicate75thPercentileElements();
+                        if (has90thPercentile) duplicate90thPercentileElements();
                     }
                 });
             }
