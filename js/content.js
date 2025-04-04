@@ -1146,7 +1146,7 @@ function addAfterTaxDetailedColumn() {
       const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
                               taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
       
-      headerText.textContent = `After Tax `;
+      headerText.textContent = `After Tax`;
       
       const currencyButton = document.createElement('button');
       currencyButton.type = 'button';
@@ -1158,7 +1158,7 @@ function addAfterTaxDetailedColumn() {
       
       const subText = document.createElement('span');
       subText.className = 'MuiTypography-root MuiTypography-caption css-12nofzu';
-      subText.textContent = ``;
+      subText.textContent = `(By location)`;
       headerDiv.appendChild(subText);
       
       sortLabel.appendChild(headerDiv);
