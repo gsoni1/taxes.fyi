@@ -462,33 +462,6 @@ function formatExactSalary(value) {
     return `$${Math.round(value).toLocaleString()}`;
 }
 
-// Function to get location from URL
-function getLocationFromURL() {
-    const path = window.location.pathname;
-    if (!path.includes('/locations/')) return null;
-    
-    const mapping = {
-        'greater-seattle-area': { state: 'WA', city: 'Seattle' },
-        'san-francisco-bay-area': { state: 'CA', city: 'San Francisco' },
-        'greater-san-diego-area': { state: 'CA', city: 'San Diego' },
-        'greater-los-angeles-area': { state: 'CA', city: 'Los Angeles' },
-        'new-york-city-area': { state: 'NY', city: 'New York' },
-        'greater-dallas-area': { state: 'TX', city: 'Dallas' },
-        'greater-austin-area': { state: 'TX', city: 'Austin' },
-        'atlanta-area': { state: 'GA', city: 'Atlanta' },
-        'northern-virginia-washington-dc': { state: 'VA', city: 'Arlington' },
-        'greater-boston-area': { state: 'MA', city: 'Boston' }
-    };
-    
-    for (const [urlPath, location] of Object.entries(mapping)) {
-        if (path.includes(urlPath)) {
-            return location;
-        }
-    }
-    
-    return null;
-}
-
 // Main function to add the After Tax column
 function addAfterTaxColumn() {
   console.log('Taxes.fyi: Looking for tables to modify...');
@@ -1249,10 +1222,12 @@ detailedTableObserver.observe(document.body, {
 
 // Function to duplicate median elements and show after-tax values
 function duplicateMedianElements() {
-    // Check if already added
+    // Check if we already added the after-tax elements
     const existingAfterTaxMedian = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
         .find(el => el.textContent.includes('After Tax'));
-    if (existingAfterTaxMedian) return;
+    if (existingAfterTaxMedian) {
+        return;
+    }
 
     const amountElement = document.querySelector('.percentiles_medianAmount__XO6Ww');
     const labelElement = document.querySelector('.percentiles_percentileLabel__8qVrS');
@@ -1262,29 +1237,21 @@ function duplicateMedianElements() {
         const amountClone = amountElement.cloneNode(true);
         const labelClone = labelElement.cloneNode(true);
 
-        // Get location info
-        const location = getLocationFromURL();
-        
-        // Update label text based on whether we have location info
-        if (location) {
-            labelClone.textContent = `After Tax (${location.city})`;
-        } else {
-            const stateAbbr = taxSettings.state;
-            const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                                   taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
-            labelClone.textContent = `After Tax (${stateAbbr}, ${filingStatusAbbr})`;
-        }
+        // Update label text
+        const stateAbbr = taxSettings.state;
+        const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                               taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+        labelClone.textContent = `After Tax (${stateAbbr}, ${filingStatusAbbr})`;
 
         // Calculate after-tax amount
         const totalSalary = parseSalaryString(amountElement.textContent);
         if (totalSalary > 0) {
-            // Use location-based calculation if available, otherwise use settings
-            const totalTax = location ? calculateTotalTax(totalSalary, location) : calculateTotalTax(totalSalary);
+            const totalTax = calculateTotalTax(totalSalary);
             const afterTaxSalary = totalSalary - totalTax;
             amountClone.textContent = formatExactSalary(afterTaxSalary);
         }
 
-        // Insert clones into DOM
+        // Insert clones after original elements
         labelElement.parentNode.insertBefore(amountClone, labelElement.nextSibling);
         amountClone.parentNode.insertBefore(labelClone, amountClone.nextSibling);
 
@@ -1292,21 +1259,16 @@ function duplicateMedianElements() {
         chrome.storage.onChanged.addListener((changes, namespace) => {
             if (namespace === 'sync' && changes.taxSettings) {
                 const newSettings = changes.taxSettings.newValue;
-                const newLocation = getLocationFromURL();
+                const newStateAbbr = newSettings.state;
+                const newFilingStatusAbbr = newSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                                          newSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
                 
                 // Update label
-                if (newLocation) {
-                    labelClone.textContent = `After Tax (${newLocation.city})`;
-                } else {
-                    const stateAbbr = newSettings.state;
-                    const filingStatusAbbr = newSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                                           newSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
-                    labelClone.textContent = `After Tax (${stateAbbr}, ${filingStatusAbbr})`;
-                }
+                labelClone.textContent = `After Tax (${newStateAbbr}, ${newFilingStatusAbbr})`;
                 
                 // Update amount
                 if (totalSalary > 0) {
-                    const newTotalTax = newLocation ? calculateTotalTax(totalSalary, newLocation) : calculateTotalTax(totalSalary);
+                    const newTotalTax = calculateTotalTax(totalSalary);
                     const newAfterTaxSalary = totalSalary - newTotalTax;
                     amountClone.textContent = formatExactSalary(newAfterTaxSalary);
                 }
@@ -1315,12 +1277,14 @@ function duplicateMedianElements() {
     }
 }
 
-// Function to duplicate percentile elements with the same pattern
+// Function to duplicate percentile bar elements and show after-tax values
 function duplicatePercentileElements() {
-    // Check if already added
+    // Check if we already added the after-tax elements
     const existingAfterTaxPercentile = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
         .find(el => el.textContent.includes('After Tax 25th%'));
-    if (existingAfterTaxPercentile) return;
+    if (existingAfterTaxPercentile) {
+        return;
+    }
 
     const barElement = document.querySelector('.percentiles_percentileBar___ll7Y');
     const amountElement = document.querySelector('.percentiles_percentileBar___ll7Y + .css-es1xmb');
@@ -1332,24 +1296,26 @@ function duplicatePercentileElements() {
         const amountClone = amountElement.cloneNode(true);
         const labelClone = labelElement.cloneNode(true);
 
-        // Always show the label as "After Tax 25th%"
-        labelClone.textContent = 'After Tax 25th%';
+        // Update label text
+        const stateAbbr = taxSettings.state;
+        const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                               taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+        labelClone.textContent = `After Tax 25th%`;
 
-        // Calculate after-tax amount using location or settings
+        // Calculate after-tax amount
         const totalSalary = parseSalaryString(amountElement.textContent);
         if (totalSalary > 0) {
-            const location = getLocationFromURL();
-            const totalTax = location ? calculateTotalTax(totalSalary, location) : calculateTotalTax(totalSalary);
+            const totalTax = calculateTotalTax(totalSalary);
             const afterTaxSalary = totalSalary - totalTax;
             amountClone.textContent = formatExactSalary(afterTaxSalary);
 
-            // Adjust bar width
+            // Adjust the bar width to reflect the after-tax amount
             const ratio = afterTaxSalary / totalSalary;
             const originalWidth = window.getComputedStyle(barElement).width;
             barClone.style.width = `${parseFloat(originalWidth) * ratio}px`;
         }
 
-        // Insert clones into DOM
+        // Insert clones after original elements
         const container = barElement.parentNode;
         container.insertBefore(barClone, labelElement.nextSibling);
         container.insertBefore(amountClone, barClone.nextSibling);
@@ -1358,11 +1324,17 @@ function duplicatePercentileElements() {
         // Listen for settings changes
         chrome.storage.onChanged.addListener((changes, namespace) => {
             if (namespace === 'sync' && changes.taxSettings) {
-                const newLocation = getLocationFromURL();
+                const newSettings = changes.taxSettings.newValue;
+                const newStateAbbr = newSettings.state;
+                const newFilingStatusAbbr = newSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                                          newSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+                
+                // Update label
+                labelClone.textContent = `After Tax 25th%`;
                 
                 // Update amount and bar
                 if (totalSalary > 0) {
-                    const newTotalTax = newLocation ? calculateTotalTax(totalSalary, newLocation) : calculateTotalTax(totalSalary);
+                    const newTotalTax = calculateTotalTax(totalSalary);
                     const newAfterTaxSalary = totalSalary - newTotalTax;
                     amountClone.textContent = formatExactSalary(newAfterTaxSalary);
                     
@@ -1376,12 +1348,16 @@ function duplicatePercentileElements() {
     }
 }
 
-// Update 75th and 90th percentile functions similarly
+// Function to duplicate 75th percentile elements and show after-tax values
 function duplicate75thPercentileElements() {
+    // Check if we already added the after-tax elements
     const existingAfterTax75thPercentile = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
         .find(el => el.textContent.includes('After Tax 75th%'));
-    if (existingAfterTax75thPercentile) return;
+    if (existingAfterTax75thPercentile) {
+        return;
+    }
 
+    // Find all percentile bars and get the third one (75th)
     const allBars = document.querySelectorAll('.percentiles_percentileBar___ll7Y');
     const barElement = Array.from(allBars).find((bar, index) => {
         const nextLabel = bar.parentNode.querySelector('.percentiles_percentileLabel__8qVrS');
@@ -1390,42 +1366,47 @@ function duplicate75thPercentileElements() {
 
     if (!barElement) return;
 
+    // Find corresponding amount and label elements
     const container = barElement.parentNode;
     const amountElement = container.querySelector('.css-es1xmb');
     const labelElement = container.querySelector('.percentiles_percentileLabel__8qVrS');
 
     if (barElement && amountElement && labelElement) {
+        // Create clones
         const barClone = barElement.cloneNode(true);
         const amountClone = amountElement.cloneNode(true);
         const labelClone = labelElement.cloneNode(true);
 
+        // Update label text
         labelClone.textContent = 'After Tax 75th%';
 
+        // Calculate after-tax amount
         const totalSalary = parseSalaryString(amountElement.textContent);
         if (totalSalary > 0) {
-            const location = getLocationFromURL();
-            const totalTax = location ? calculateTotalTax(totalSalary, location) : calculateTotalTax(totalSalary);
+            const totalTax = calculateTotalTax(totalSalary);
             const afterTaxSalary = totalSalary - totalTax;
             amountClone.textContent = formatExactSalary(afterTaxSalary);
 
+            // Adjust the bar width to reflect the after-tax amount
             const ratio = afterTaxSalary / totalSalary;
             const originalWidth = window.getComputedStyle(barElement).width;
             barClone.style.width = `${parseFloat(originalWidth) * ratio}px`;
         }
 
+        // Insert clones after original elements
         container.insertBefore(barClone, labelElement.nextSibling);
         container.insertBefore(amountClone, barClone.nextSibling);
         container.insertBefore(labelClone, amountClone.nextSibling);
 
+        // Listen for settings changes
         chrome.storage.onChanged.addListener((changes, namespace) => {
             if (namespace === 'sync' && changes.taxSettings) {
-                const newLocation = getLocationFromURL();
-                
                 if (totalSalary > 0) {
-                    const newTotalTax = newLocation ? calculateTotalTax(totalSalary, newLocation) : calculateTotalTax(totalSalary);
+                    const newTotalTax = calculateTotalTax(totalSalary);
                     const newAfterTaxSalary = totalSalary - newTotalTax;
                     amountClone.textContent = formatExactSalary(newAfterTaxSalary);
                     
+                    // Update bar width
                     const ratio = newAfterTaxSalary / totalSalary;
                     const originalWidth = window.getComputedStyle(barElement).width;
                     barClone.style.width = `${parseFloat(originalWidth) * ratio}px`;
@@ -1435,11 +1416,16 @@ function duplicate75thPercentileElements() {
     }
 }
 
+// Function to duplicate 90th percentile elements and show after-tax values
 function duplicate90thPercentileElements() {
+    // Check if we already added the after-tax elements
     const existingAfterTax90thPercentile = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
         .find(el => el.textContent.includes('After Tax 90th%'));
-    if (existingAfterTax90thPercentile) return;
+    if (existingAfterTax90thPercentile) {
+        return;
+    }
 
+    // Find all percentile bars and get the fourth one (90th)
     const allBars = document.querySelectorAll('.percentiles_percentileBar___ll7Y');
     const barElement = Array.from(allBars).find((bar, index) => {
         const nextLabel = bar.parentNode.querySelector('.percentiles_percentileLabel__8qVrS');
@@ -1448,42 +1434,47 @@ function duplicate90thPercentileElements() {
 
     if (!barElement) return;
 
+    // Find corresponding amount and label elements
     const container = barElement.parentNode;
     const amountElement = container.querySelector('.css-es1xmb');
     const labelElement = container.querySelector('.percentiles_percentileLabel__8qVrS');
 
     if (barElement && amountElement && labelElement) {
+        // Create clones
         const barClone = barElement.cloneNode(true);
         const amountClone = amountElement.cloneNode(true);
         const labelClone = labelElement.cloneNode(true);
 
+        // Update label text
         labelClone.textContent = 'After Tax 90th%';
 
+        // Calculate after-tax amount
         const totalSalary = parseSalaryString(amountElement.textContent);
         if (totalSalary > 0) {
-            const location = getLocationFromURL();
-            const totalTax = location ? calculateTotalTax(totalSalary, location) : calculateTotalTax(totalSalary);
+            const totalTax = calculateTotalTax(totalSalary);
             const afterTaxSalary = totalSalary - totalTax;
             amountClone.textContent = formatExactSalary(afterTaxSalary);
 
+            // Adjust the bar width to reflect the after-tax amount
             const ratio = afterTaxSalary / totalSalary;
             const originalWidth = window.getComputedStyle(barElement).width;
             barClone.style.width = `${parseFloat(originalWidth) * ratio}px`;
         }
 
+        // Insert clones after original elements
         container.insertBefore(barClone, labelElement.nextSibling);
         container.insertBefore(amountClone, barClone.nextSibling);
         container.insertBefore(labelClone, amountClone.nextSibling);
 
+        // Listen for settings changes
         chrome.storage.onChanged.addListener((changes, namespace) => {
             if (namespace === 'sync' && changes.taxSettings) {
-                const newLocation = getLocationFromURL();
-                
                 if (totalSalary > 0) {
-                    const newTotalTax = newLocation ? calculateTotalTax(totalSalary, newLocation) : calculateTotalTax(totalSalary);
+                    const newTotalTax = calculateTotalTax(totalSalary);
                     const newAfterTaxSalary = totalSalary - newTotalTax;
                     amountClone.textContent = formatExactSalary(newAfterTaxSalary);
                     
+                    // Update bar width
                     const ratio = newAfterTaxSalary / totalSalary;
                     const originalWidth = window.getComputedStyle(barElement).width;
                     barClone.style.width = `${parseFloat(originalWidth) * ratio}px`;
@@ -1497,6 +1488,7 @@ function duplicate90thPercentileElements() {
 const medianObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
         if (mutation.type === 'childList') {
+            // Check for median elements
             const medianAmount = document.querySelector('.percentiles_medianAmount__XO6Ww');
             const medianLabel = document.querySelector('.percentiles_percentileLabel__8qVrS');
             
@@ -1509,6 +1501,7 @@ const medianObserver = new MutationObserver((mutations) => {
                 });
             }
 
+            // Check for all percentile elements
             const allBars = document.querySelectorAll('.percentiles_percentileBar___ll7Y');
             const labels = document.querySelectorAll('.percentiles_percentileLabel__8qVrS');
             
