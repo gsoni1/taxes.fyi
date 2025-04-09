@@ -1515,20 +1515,3 @@ medianObserver.observe(document.body, {
     childList: true,
     subtree: true
 });
-
-// Set up URL change observer
-let lastUrl = location.href;
-const urlObserver = new MutationObserver(() => {
-    const currentUrl = location.href;
-    if (currentUrl !== lastUrl) {
-        console.log('Taxes.fyi: URL changed, refreshing page...');
-        lastUrl = currentUrl;
-        window.location.reload();
-    }
-});
-
-// Start observing URL changes
-urlObserver.observe(document.body, {
-    childList: true,
-    subtree: true
-});
