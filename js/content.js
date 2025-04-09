@@ -623,7 +623,7 @@ function addAfterTaxColumn() {
   });
 }
 
-// Modify the settings change listener to only handle regular tables
+// Modify the settings change listener to handle all table types
 chrome.storage.onChanged.addListener(function(changes, namespace) {
   if (namespace === 'sync') {
     if (changes.taxSettings) {
@@ -633,49 +633,31 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       const shouldAddNewColumn = columnSettings.addNewColumn;
       
       if (shouldAddNewColumn) {
-        // Remove existing after-tax columns from basic tables only
+        // Remove all existing after-tax columns
         const tables = document.querySelectorAll('.MuiTable-root');
         tables.forEach(table => {
           const headerRow = table.querySelector('thead tr');
           if (!headerRow) return;
           
-          // Skip detailed tables that have the sort table header
+          // Skip detailed tables
           if (headerRow.querySelector('.salary-table_sortTableHeaderText__ZYL7k')) return;
           
-          const afterTaxHeaders = Array.from(headerRow.querySelectorAll('th h6'))
-            .filter(h => h.textContent.trim() === 'After Tax ');
-            
-          afterTaxHeaders.forEach(header => {
-            const column = header.closest('th');
-            const columnIndex = Array.from(headerRow.children).indexOf(column);
-            
-            // Remove the header
-            column.remove();
-            
-            // Remove the corresponding cell in each row
-            const rows = table.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-              if (columnIndex < row.children.length) {
-                row.children[columnIndex].remove();
-              }
-            });
-          });
+          removeAfterTaxColumn(table);
         });
         
         // Add new after-tax columns with updated calculations
         setTimeout(addAfterTaxColumn, 500);
       } else {
-        // Update values only in non-detailed tables
+        // Update values in existing after-tax columns
         const tables = document.querySelectorAll('.MuiTable-root');
         tables.forEach(table => {
           const headerRow = table.querySelector('thead tr');
           if (!headerRow) return;
           
-          // Skip detailed tables that have the sort table header
+          // Skip detailed tables
           if (headerRow.querySelector('.salary-table_sortTableHeaderText__ZYL7k')) return;
           
-          // Update values in this table
-          updateTableValues(table);
+          updateNormalTableValues(table);
         });
       }
     }
@@ -686,6 +668,102 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
     }
   }
 });
+
+// Function to remove after-tax column from a table
+function removeAfterTaxColumn(table) {
+  const headerRow = table.querySelector('thead tr');
+  if (!headerRow) return;
+  
+  const afterTaxHeaders = Array.from(headerRow.querySelectorAll('th h6'))
+    .filter(h => h.textContent.trim() === 'After Tax ');
+  
+  afterTaxHeaders.forEach(header => {
+    const column = header.closest('th');
+    const columnIndex = Array.from(headerRow.children).indexOf(column);
+    
+    // Remove the header
+    column.remove();
+    
+    // Remove the corresponding cell in each row
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      if (columnIndex < row.children.length) {
+        row.children[columnIndex].remove();
+      }
+    });
+  });
+}
+
+// Function to update values in normal (non-detailed) table
+function updateNormalTableValues(table) {
+  const headerRow = table.querySelector('thead tr');
+  if (!headerRow) return;
+  
+  const headerCells = headerRow.querySelectorAll('th');
+  let totalColumnIndex = -1;
+  let afterTaxColumnIndex = -1;
+  
+  for (let i = 0; i < headerCells.length; i++) {
+    const headerText = headerCells[i].textContent.trim();
+    if (headerText.includes('Total')) {
+      totalColumnIndex = i;
+    } else if (headerText.includes('After Tax')) {
+      afterTaxColumnIndex = i;
+    }
+  }
+  
+  if (totalColumnIndex === -1 || afterTaxColumnIndex === -1) return;
+  
+  // Update the state and filing status in the header
+  const afterTaxHeader = headerCells[afterTaxColumnIndex];
+  const stateAbbr = taxSettings.state;
+  const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                         taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+  
+  // Find or create the info span
+  let infoSpan = afterTaxHeader.querySelector('span');
+  if (!infoSpan) {
+    infoSpan = document.createElement('span');
+    infoSpan.className = 'MuiTypography-root MuiTypography-caption job-family_secondary__YtLA8 css-b4wlzm';
+    afterTaxHeader.appendChild(infoSpan);
+  }
+  
+  // Update the text
+  infoSpan.textContent = `(${stateAbbr}, ${filingStatusAbbr})`;
+  
+  // Update values in rows
+  const rows = table.querySelectorAll('tbody tr');
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (totalColumnIndex >= cells.length || afterTaxColumnIndex >= cells.length) return;
+    
+    const totalCell = cells[totalColumnIndex];
+    const afterTaxCell = cells[afterTaxColumnIndex];
+    const totalValueElement = totalCell.querySelector('h6');
+    const afterTaxValueElement = afterTaxCell.querySelector('h6');
+    
+    if (!totalValueElement || !afterTaxValueElement) return;
+    
+    const totalSalaryText = totalValueElement.textContent;
+    const totalSalary = parseSalaryString(totalSalaryText);
+    
+    // Calculate after-tax salary using current settings
+    let afterTaxSalary = totalSalary;
+    if (totalSalary > 0) {
+      const totalTax = calculateTotalTax(totalSalary);
+      afterTaxSalary = totalSalary - totalTax;
+    }
+    
+    // Update the value
+    afterTaxValueElement.textContent = formatSalary(afterTaxSalary);
+    
+    // Match styling with total column
+    const isTotalBold = totalValueElement.className.includes('css-xj4mea');
+    afterTaxValueElement.className = isTotalBold ? 
+      'MuiTypography-root MuiTypography-subtitle1 css-xj4mea' : 
+      'MuiTypography-root MuiTypography-subtitle1 css-6xe2a5';
+  });
+}
 
 // Create a helper function to update values in a single table
 function updateTableValues(table) {
