@@ -11,6 +11,11 @@ let columnSettings = {
   addNewColumn: false // Default to not creating a new column when updating
 };
 
+// Constants for retry mechanism
+const MAX_RETRIES = 5;
+const INITIAL_DELAY = 2000;
+let retryCount = 0;
+
 // Load user settings from storage
 chrome.storage.sync.get(['taxSettings', 'columnSettings'], function(result) {
   if (result.taxSettings) {
@@ -21,16 +26,39 @@ chrome.storage.sync.get(['taxSettings', 'columnSettings'], function(result) {
     columnSettings = result.columnSettings;
   }
   
-  // Run on page load
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('Taxes.fyi: DOM fully loaded');
-    setTimeout(addAfterTaxColumn, 1000); // Wait a bit for any dynamic content
-    setTimeout(addAfterTaxDetailedColumn, 1000); // Initial run for detailed tables
-  });
-  
-  // Also run now in case DOMContentLoaded already fired
-  setTimeout(addAfterTaxColumn, 1000);
-  setTimeout(addAfterTaxDetailedColumn, 1000);
+  // Function to check if React is ready
+  const isReactReady = () => {
+    const root = document.querySelector('#__next');
+    return root && root.children.length > 0;
+  };
+
+  // Function to initialize with retry
+  const initializeWithRetry = () => {
+    if (retryCount >= MAX_RETRIES) {
+      console.log('Taxes.fyi: Max retries reached, giving up');
+      return;
+    }
+
+    if (!isReactReady()) {
+      retryCount++;
+      console.log(`Taxes.fyi: React not ready, retry ${retryCount} of ${MAX_RETRIES}`);
+      setTimeout(initializeWithRetry, INITIAL_DELAY);
+      return;
+    }
+
+    console.log('Taxes.fyi: React ready, initializing');
+    setTimeout(() => {
+      try {
+        addAfterTaxColumn();
+        addAfterTaxDetailedColumn();
+      } catch (error) {
+        console.error('Taxes.fyi: Initialization error:', error);
+      }
+    }, 500);
+  };
+
+  // Start initialization process
+  setTimeout(initializeWithRetry, INITIAL_DELAY);
 });
 
 // Tax calculation functions
@@ -508,12 +536,15 @@ function addAfterTaxColumn() {
       
       // Create the After Tax header cell
       const totalHeaderCell = headerCells[totalColumnIndex];
+      const h6Element = totalHeaderCell.querySelector('h6');
+      if (!h6Element) return;
+      
       const newHeaderCell = document.createElement('th');
-      newHeaderCell.className = totalHeaderCell.className;
+      newHeaderCell.className = totalHeaderCell.className || '';
       newHeaderCell.setAttribute('scope', 'col');
       
       const headerTitle = document.createElement('h6');
-      headerTitle.className = totalHeaderCell.querySelector('h6').className;
+      headerTitle.className = h6Element.className;
       headerTitle.textContent = 'After Tax ';
       
       // Add state and filing status in parentheses
@@ -743,55 +774,44 @@ function updateAfterTaxValues() {
 
 // Set up a MutationObserver to detect when new tables are added or content changes
 const observer = new MutationObserver(function(mutations) {
-  let shouldCheck = false;
-  let shouldUpdateStyles = false;
-  
-  // Check mutations for table additions or style changes
-  mutations.forEach(mutation => {
-    if (mutation.type === 'childList') {
-      const addedNodes = Array.from(mutation.addedNodes);
-      
-      // Check for new tables
-      const hasTable = addedNodes.some(node => {
-        return node.nodeType === 1 && (
-          node.classList && node.classList.contains('MuiTable-root') ||
-          node.querySelector && node.querySelector('.MuiTable-root')
-        );
-      });
-      
-      if (hasTable) {
-        shouldCheck = true;
+  clearTimeout(window._taxesFyiTimeout);
+  window._taxesFyiTimeout = setTimeout(() => {
+    // Check if React is ready before processing
+    if (!document.querySelector('#__next')) return;
+
+    let shouldUpdate = false;
+    mutations.forEach(mutation => {
+      if (mutation.type === 'childList') {
+        const hasRelevantChanges = Array.from(mutation.addedNodes).some(node => {
+          if (node.nodeType !== 1) return false;
+          return node.querySelector?.('.MuiTable-root, .percentiles_medianAmount__XO6Ww') ||
+                 node.classList?.contains('MuiTable-root') ||
+                 node.classList?.contains('percentiles_medianAmount__XO6Ww');
+        });
+        if (hasRelevantChanges) shouldUpdate = true;
       }
-      
-      // Check for salary value changes (like when expanding a dropdown)
-      const hasSalaryChanges = addedNodes.some(node => {
-        return node.nodeType === 1 && (
-          (node.tagName === 'H6' && node.closest('td')) ||
-          node.querySelector && node.querySelector('h6')
-        );
-      });
-      
-      if (hasSalaryChanges) {
-        shouldUpdateStyles = true;
-      }
-    } else if (mutation.type === 'attributes' && 
-               mutation.target.tagName === 'H6' && 
-               mutation.attributeName === 'class') {
-      // Detect class changes on h6 elements (which could be salary values)
-      shouldUpdateStyles = true;
+    });
+
+    if (shouldUpdate) {
+      console.log('Taxes.fyi: Content changes detected, updating...');
+      setTimeout(() => {
+        try {
+          if (document.querySelector('.MuiTable-root')) {
+            addAfterTaxColumn();
+            addAfterTaxDetailedColumn();
+          }
+          if (document.querySelector('.percentiles_medianAmount__XO6Ww')) {
+            duplicateMedianElements();
+            duplicatePercentileElements();
+            duplicate75thPercentileElements();
+            duplicate90thPercentileElements();
+          }
+        } catch (error) {
+          console.error('Taxes.fyi: Update error:', error);
+        }
+      }, 1000);
     }
-  });
-  
-  if (shouldCheck) {
-    console.log('Taxes.fyi: New table detected, checking for modifications...');
-    setTimeout(addAfterTaxColumn, 1000);
-    setTimeout(addAfterTaxDetailedColumn, 1000);
-  }
-  
-  if (shouldUpdateStyles) {
-    console.log('Taxes.fyi: Salary display changes detected, updating styles...');
-    setTimeout(fixAfterTaxStyles, 500);
-  }
+  }, 250);
 });
 
 // Function to fix styling on after-tax values
@@ -1516,19 +1536,74 @@ medianObserver.observe(document.body, {
     subtree: true
 });
 
-// Set up URL change observer
+// Enhanced URL change detection
 let lastUrl = location.href;
-const urlObserver = new MutationObserver(() => {
-    const currentUrl = location.href;
-    if (currentUrl !== lastUrl) {
-        console.log('Taxes.fyi: URL changed, refreshing page...');
-        lastUrl = currentUrl;
-        window.location.reload();
-    }
+let isReloading = false;
+let reloadTimeout = null;
+
+// Function to safely reload the page
+function safeReload() {
+  if (isReloading) return;
+  isReloading = true;
+  
+  // Clear any pending reload
+  if (reloadTimeout) clearTimeout(reloadTimeout);
+  
+  console.log('Taxes.fyi: URL changed from', lastUrl, 'to', location.href);
+  lastUrl = location.href;
+  
+  reloadTimeout = setTimeout(() => {
+    console.log('Taxes.fyi: Reloading page');
+    window.location.reload();
+  }, 100);
+}
+
+// Monitor URL changes using multiple methods
+function checkUrlChange() {
+  if (location.href !== lastUrl) {
+    safeReload();
+  }
+}
+
+// Check URL changes frequently
+setInterval(checkUrlChange, 50);
+
+// Listen for navigation events
+window.addEventListener('popstate', safeReload);
+window.addEventListener('hashchange', safeReload);
+
+// Listen for React router changes
+document.addEventListener('click', function(e) {
+  const isNavElement = e.target.closest('a[href], button[role="link"], [data-testid="link"], .css-4g6ai3');
+  if (isNavElement) {
+    setTimeout(checkUrlChange, 50);
+  }
 });
 
-// Start observing URL changes
-urlObserver.observe(document.body, {
-    childList: true,
-    subtree: true
+// Override history methods
+const originalPushState = history.pushState;
+const originalReplaceState = history.replaceState;
+
+history.pushState = function() {
+  originalPushState.apply(this, arguments);
+  setTimeout(checkUrlChange, 50);
+};
+
+history.replaceState = function() {
+  originalReplaceState.apply(this, arguments);
+  setTimeout(checkUrlChange, 50);
+};
+
+// Monitor DOM changes that might indicate navigation
+const navigationObserver = new MutationObserver(() => {
+  if (location.href !== lastUrl) {
+    safeReload();
+  }
+});
+
+navigationObserver.observe(document.body, {
+  childList: true,
+  subtree: true,
+  attributes: true,
+  attributeFilter: ['href', 'pathname']
 });
