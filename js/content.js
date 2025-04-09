@@ -626,46 +626,50 @@ function addAfterTaxColumn() {
 // Listen for changes to settings
 chrome.storage.onChanged.addListener(function(changes, namespace) {
   if (namespace === 'sync') {
-    // Update tax settings if they changed
     if (changes.taxSettings) {
       console.log('Taxes.fyi: Tax settings changed, updating calculations...');
       taxSettings = changes.taxSettings.newValue;
       
-      // Check if we should create a new column
       const shouldAddNewColumn = columnSettings.addNewColumn;
       
       if (shouldAddNewColumn) {
-        // Remove existing after-tax columns
-        const afterTaxHeaders = document.querySelectorAll('th h6');
-        afterTaxHeaders.forEach(header => {
-          if (header.textContent.trim() === 'After Tax ') {
-            const column = header.closest('th');
-            const table = column.closest('table');
-            const headerRow = column.parentNode;
-            const columnIndex = Array.from(headerRow.children).indexOf(column);
-            
-            // Remove the header
-            column.remove();
-            
-            // Remove the corresponding cell in each row
-            const rows = table.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-              if (columnIndex < row.children.length) {
-                row.children[columnIndex].remove();
-              }
-            });
-          }
+        // Remove existing after-tax columns from basic tables only
+        const tables = document.querySelectorAll('.MuiTable-root');
+        tables.forEach(table => {
+          const headerRow = table.querySelector('thead tr');
+          if (!headerRow) return;
+          
+          // Skip detailed tables
+          if (headerRow.querySelector('.salary-table_sortTableHeaderText__ZYL7k')) return;
+          
+          const afterTaxHeaders = headerRow.querySelectorAll('th h6');
+          afterTaxHeaders.forEach(header => {
+            if (header.textContent.trim() === 'After Tax ') {
+              const column = header.closest('th');
+              const columnIndex = Array.from(headerRow.children).indexOf(column);
+              
+              // Remove the header
+              column.remove();
+              
+              // Remove the corresponding cell in each row
+              const rows = table.querySelectorAll('tbody tr');
+              rows.forEach(row => {
+                if (columnIndex < row.children.length) {
+                  row.children[columnIndex].remove();
+                }
+              });
+            }
+          });
         });
         
         // Add new after-tax columns with updated calculations
         setTimeout(addAfterTaxColumn, 500);
       } else {
-        // Just update the values in the existing cells
+        // Just update the values in the existing basic table cells
         updateAfterTaxValues();
       }
     }
     
-    // Update column settings if they changed
     if (changes.columnSettings) {
       console.log('Taxes.fyi: Column settings changed');
       columnSettings = changes.columnSettings.newValue;
@@ -1121,16 +1125,14 @@ function addAfterTaxDetailedColumn() {
       const existingDetailedHeader = Array.from(headerRow.querySelectorAll('th'))
         .find(th => th.querySelector('.salary-table_sortTableHeaderText__ZYL7k')?.textContent.includes('After Tax'));
       
-      if (existingDetailedHeader) {
-        return;
-      }
+      if (existingDetailedHeader) return;
       
       // Create new header cell with same styling as original
       const newHeaderCell = document.createElement('th');
       newHeaderCell.className = headerCell.className;
       newHeaderCell.setAttribute('scope', 'col');
       
-      // Create header content
+      // Create header content with simpler text
       const sortLabel = document.createElement('span');
       sortLabel.className = 'MuiButtonBase-root MuiTableSortLabel-root css-1x860jj';
       sortLabel.setAttribute('tabindex', '0');
@@ -1141,12 +1143,7 @@ function addAfterTaxDetailedColumn() {
       
       const headerText = document.createElement('p');
       headerText.className = 'MuiTypography-root MuiTypography-body2 salary-table_sortTableHeaderText__ZYL7k css-2o2hpw';
-      
-      const stateAbbr = taxSettings.state;
-      const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                              taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
-      
-      headerText.textContent = `After Tax`;
+      headerText.textContent = 'After Tax';
       
       const currencyButton = document.createElement('button');
       currencyButton.type = 'button';
@@ -1158,7 +1155,7 @@ function addAfterTaxDetailedColumn() {
       
       const subText = document.createElement('span');
       subText.className = 'MuiTypography-root MuiTypography-caption css-12nofzu';
-      subText.textContent = `(By location)`;
+      subText.textContent = '(By location)';
       headerDiv.appendChild(subText);
       
       sortLabel.appendChild(headerDiv);
