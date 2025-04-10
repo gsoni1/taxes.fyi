@@ -1,5 +1,7 @@
 # taxes.fyi
 ![Component 1](https://github.com/user-attachments/assets/a2c1f86b-8639-4d3d-a3b2-043c6c222636)
+<img width="1102" alt="Screenshot 2025-04-10 at 4 32 24 AM" src="https://github.com/user-attachments/assets/fc15b699-358c-4e7d-9105-99905f70eb99" />
+
 
 ## About
 taxes.fyi is a chrome extension that makes it effortless to view after-tax salary estimates directly on [levels.fyi](https://levels.fyi) — helping you get a clearer picture of real take-home pay.
