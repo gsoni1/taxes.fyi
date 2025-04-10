@@ -515,24 +515,30 @@ function addAfterTaxColumn() {
         return;
       }
       
-      // Find the Total column
+      // Find the Base column index first
       const headerCells = headerRow.querySelectorAll('th');
+      let baseColumnIndex = -1;
+      let stockColumnIndex = -1;
+      let bonusColumnIndex = -1;
       let totalColumnIndex = -1;
       
       for (let i = 0; i < headerCells.length; i++) {
         const headerText = headerCells[i].textContent.trim();
-        if (headerText.includes('Total')) {
+        if (headerText === 'Base') {
+          baseColumnIndex = i;
+        } else if (headerText === 'Stock') {
+          stockColumnIndex = i;
+        } else if (headerText === 'Bonus') {
+          bonusColumnIndex = i;
+        } else if (headerText.includes('Total')) {
           totalColumnIndex = i;
-          break;
         }
       }
       
-      if (totalColumnIndex === -1) {
-        console.log(`Taxes.fyi: No Total column found in table ${tableIndex}`);
+      if (baseColumnIndex === -1 || totalColumnIndex === -1) {
+        console.log(`Taxes.fyi: Required columns not found in table ${tableIndex}`);
         return;
       }
-      
-      console.log(`Taxes.fyi: Found Total column at index ${totalColumnIndex} in table ${tableIndex}`);
       
       // Create the After Tax header cell
       const totalHeaderCell = headerCells[totalColumnIndex];
@@ -547,10 +553,9 @@ function addAfterTaxColumn() {
       headerTitle.className = h6Element.className;
       headerTitle.textContent = 'After Tax ';
       
-      // Add state and filing status in parentheses
       const stateAbbr = taxSettings.state;
       const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                               taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+                              taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
       
       const infoSpan = document.createElement('span');
       infoSpan.className = 'MuiTypography-root MuiTypography-caption job-family_secondary__YtLA8 css-b4wlzm';
@@ -559,62 +564,72 @@ function addAfterTaxColumn() {
       newHeaderCell.appendChild(headerTitle);
       newHeaderCell.appendChild(infoSpan);
       
-      // Insert the new header cell after the Total column
-      if (totalColumnIndex + 1 < headerCells.length) {
-        headerRow.insertBefore(newHeaderCell, headerCells[totalColumnIndex + 1]);
-      } else {
-        headerRow.appendChild(newHeaderCell);
-      }
+      // Insert after Total column
+      headerRow.insertBefore(newHeaderCell, headerCells[totalColumnIndex + 1]);
       
-      // Now add the After Tax cells to each row
-      const rows = table.querySelectorAll('tbody tr');
-      
-      rows.forEach((row, rowIndex) => {
+      // Process all rows including hidden ones
+      const processRow = (row) => {
         const cells = row.querySelectorAll('td');
-        
-        if (totalColumnIndex >= cells.length) {
-          console.log(`Taxes.fyi: Row ${rowIndex} doesn't have enough cells`);
-          return;
-        }
+        if (totalColumnIndex >= cells.length) return;
         
         const totalCell = cells[totalColumnIndex];
         const totalValueElement = totalCell.querySelector('h6');
         
-        if (!totalValueElement) {
-          console.log(`Taxes.fyi: No salary value found in row ${rowIndex}`);
-          return;
-        }
+        if (!totalValueElement) return;
         
         const totalSalaryText = totalValueElement.textContent;
         const totalSalary = parseSalaryString(totalSalaryText);
         
-        // Calculate after-tax salary using popup settings
-        let afterTaxSalary = totalSalary;
-        if (totalSalary > 0) {
-          const totalTax = calculateTotalTax(totalSalary); // Use default settings from popup
-          afterTaxSalary = totalSalary - totalTax;
-        }
-        
-        // Create the new cell
+        // Create new cell
         const newCell = document.createElement('td');
         newCell.className = totalCell.className;
         
-        // Check if the Total value is bold (has the css-xj4mea class)
-        const isTotalBold = totalValueElement.className.includes('css-xj4mea');
-        
         const valueElement = document.createElement('h6');
-        valueElement.className = isTotalBold ? 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea' : totalValueElement.className;
-        valueElement.textContent = formatSalary(afterTaxSalary);
+        valueElement.className = totalValueElement.className;
         
+        // Calculate after-tax value
+        let afterTaxSalary = totalSalary;
+        if (totalSalary > 0) {
+          const totalTax = calculateTotalTax(totalSalary);
+          afterTaxSalary = totalSalary - totalTax;
+        }
+        
+        valueElement.textContent = formatSalary(afterTaxSalary);
         newCell.appendChild(valueElement);
         
-        // Insert the new cell after the Total column
-        if (totalColumnIndex + 1 < cells.length) {
-          row.insertBefore(newCell, cells[totalColumnIndex + 1]);
-        } else {
-          row.appendChild(newCell);
-        }
+        // Insert after Total column
+        row.insertBefore(newCell, cells[totalColumnIndex + 1]);
+      };
+      
+      // Handle both visible and dropdown rows
+      const processAllRows = () => {
+        const allRows = table.querySelectorAll('tbody tr');
+        allRows.forEach(processRow);
+      };
+      
+      // Initial processing of rows
+      processAllRows();
+      
+      // Set up observer for dropdown rows
+      const dropdownObserver = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+            const addedRows = Array.from(mutation.addedNodes)
+              .filter(node => node.nodeType === 1 && node.tagName === 'TR');
+            
+            addedRows.forEach(processRow);
+          }
+        });
       });
+      
+      // Observe tbody for changes
+      const tbody = table.querySelector('tbody');
+      if (tbody) {
+        dropdownObserver.observe(tbody, {
+          childList: true,
+          subtree: true
+        });
+      }
       
       console.log(`Taxes.fyi: Successfully modified table ${tableIndex}`);
     } catch (error) {
