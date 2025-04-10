@@ -1,6 +1,6 @@
 # taxes.fyi
 
-![Component 1 (1)](https://github.com/user-attachments/assets/436383f1-3f6e-4866-9697-023cd461565d)
+![taxes.fyi](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/taxesfyilogo.png)
 
 
 ## About
@@ -10,21 +10,40 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 
 ## Features
 **Adds tax salary column for:**
-- average compensation salary table
-- latest salary submissions table
+- Average compensation salary table
+- Latest salary submissions table
 
-**\+ adds after tax figures for:**
-- level specific compensation breakdown
-- salaries by title (median, 25th%, 75th%, and 90th% percentiles)
-- salary by title & location (median, 25th%, 75th%, and 90th% percentiles)
+**\+ Adds after tax figures for:**
+- Level-specific compensation breakdown
+- Salary by title & location (median, 25th%, 75th%, and 90th% percentiles)
 
 **Extension settings:**
-- Choose between states and filing statuses (Single, Joint, Separately, Head)
 - Add multiple columns for multiple states and/or filing statuses 
+- Choose between states and filing statuses (Single, Joint, Separately, Head)
 
 ## Product Requirements Document
-[Coming soon](https://levels.fyi) 
+[Coming soon]() 
 
 ## Feature screenshots
+### Average Compensation Salary Table
+![Average Compensation Salary Table](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/averagecompensationsalarytable.png)
 
+### Latest Salary Submissions Table
+![Latest Salary Submissions Table](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/latestsalarysubmissionstable.png)
+
+### Level-Specific Compensation 
+![Level-Specific Compensation](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/levelspecificcompesnationbreakdown.png.png)
+
+### Salary by Title
+![Salary by Title](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/salarybytitle.png)
+
+### Salary by Title and Location
+![Salary by Title and Location](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/salarybylocation.png)
+
+### Multiple Columns
+![Multiple Columns](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/multiplecolumns.png)
+
+### Popup Settings
+![Popup Settings](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/popup.png)
 ## Demos
+[Coming soon]() 
