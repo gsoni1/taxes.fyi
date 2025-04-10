@@ -9,7 +9,7 @@ taxes.fyi is a chrome extension that makes it effortless to view after-tax salar
 _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 
 ## Features
-**Adds tax salary column for:**
+**Adds after tax salary column for:**
 - Average compensation salary table
 - Latest salary submissions table
 
