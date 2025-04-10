@@ -45,5 +45,10 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 
 ### Popup Settings
 ![Popup Settings](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/popup.png)
+
 ## Demos
-[Coming soon]() 
+[](https://github.com/user-attachments/assets/51553a29-df4d-40a0-b980-d54d0f6bd228) 
+
+
+
+
