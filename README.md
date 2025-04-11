@@ -24,7 +24,24 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 ## Product Requirements Document
 [Coming soon]() 
 
-## Feature screenshots
+## Demos
+### Average Compensation Salary Table
+https://github.com/user-attachments/assets/d33eddcb-21ff-4e9d-9600-dbab13d8d6e0
+
+### Latest Salary Submissions Table
+https://github.com/user-attachments/assets/cefb478d-8698-462f-9945-06efabe03645
+
+### Level-Specific Compensation 
+https://github.com/user-attachments/assets/c59309d4-d008-4110-9fd3-db1fbe59acde
+
+### Salary by Title
+https://github.com/user-attachments/assets/8977c4e0-c242-46f2-b88f-9ad617db1691
+
+### Salary by Title and Location
+https://github.com/user-attachments/assets/15b8cd31-4a8d-4a63-b786-33ead870931f
+
+
+## Feature Screenshots
 ### Average Compensation Salary Table
 ![Average Compensation Salary Table](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/averagecompensationsalarytable.png)
 
@@ -45,10 +62,3 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 
 ### Popup Settings
 ![Popup Settings](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/popup.png)
-
-## Demos
-[](https://github.com/user-attachments/assets/51553a29-df4d-40a0-b980-d54d0f6bd228) 
-
-
-
-
