@@ -24,7 +24,7 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 ## Product Requirements Document
 [Coming soon]() 
 
-## Demos
+## Feature Demos
 ### Average Compensation Salary Table
 https://github.com/user-attachments/assets/d33eddcb-21ff-4e9d-9600-dbab13d8d6e0
 
