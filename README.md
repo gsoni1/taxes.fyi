@@ -22,7 +22,7 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 - Choose between states and filing statuses (Single, Joint, Separately, Head)
 
 ## Product Requirements Document
-[Coming soon]() 
+[See the Google Doc](https://docs.google.com/document/d/1qntL5deMUZpRBSYonCrBoEyvlGp8EsMPdVpmuNbUoqU/edit?usp=sharing) 
 
 ## Feature Demos
 ### Average Compensation Salary Table
