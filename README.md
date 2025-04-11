@@ -61,4 +61,8 @@ https://github.com/user-attachments/assets/15b8cd31-4a8d-4a63-b786-33ead870931f
 ![Multiple Columns](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/multiplecolumns.png)
 
 ### Popup Settings
-![Popup Settings](https://github.com/gsoni1/taxes.fyi/blob/main/readmeassets/popup.png)
+
+<img width="326" alt="Screenshot 2025-04-11 at 1 04 21 AM" src="https://github.com/user-attachments/assets/5c02bb66-ef44-475e-908d-323d37fae661" />
+<img width="326" alt="Screenshot 2025-04-11 at 1 03 13 AM" src="https://github.com/user-attachments/assets/9c1d60dd-7e8f-4f20-adc0-ed27d49ac7d0" />
+<img width="326" alt="Screenshot 2025-04-11 at 1 03 22 AM" src="https://github.com/user-attachments/assets/8f53a3c9-6f52-4eff-a141-97c292e9a0ff" />
+<img width="326" alt="Screenshot 2025-04-11 at 1 03 31 AM" src="https://github.com/user-attachments/assets/2ca86a8f-48f9-470c-9a4b-4e551334c8a2" />
