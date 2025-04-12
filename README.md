@@ -10,16 +10,17 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 
 ## Features
 **Adds after tax salary column for:**
-- Average compensation salary table
-- Latest salary submissions table
+- Average compensation salary tables
+- Latest salary submissions tables
+  - Each after-tax figure is calculated by the location of that salary submission
 
 **\+ Adds after tax figures for:**
 - Level-specific compensation breakdown
-- Salary by title & location (median, 25th%, 75th%, and 90th% percentiles)
+- Salary by title & location (after tax median, 25th%, 75th%, and 90th% percentiles)
 
 **Extension settings:**
 - Add multiple columns for multiple states and/or filing statuses 
-- Choose between states and filing statuses (Single, Joint, Separately, Head)
+- Choose between states (NY, CA, WA, TX, MA, VA, GA) and filing statuses (Single, Joint, Separately, Head) to be used in tax calculations
 
 ## Product Requirements Document
 [See the Google Doc](https://docs.google.com/document/d/1qntL5deMUZpRBSYonCrBoEyvlGp8EsMPdVpmuNbUoqU/edit?usp=sharing) 
