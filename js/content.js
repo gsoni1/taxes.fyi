@@ -146,6 +146,7 @@ function calculateFederalTax(salary, filingStatus) {
 function calculateStateTax(salary, state, filingStatus) {
   // State tax brackets for 2023
   let brackets = [];
+  const noIncomeTax = ['AL', 'AZ', 'FL', 'NH', 'NV', 'SD', 'TN', 'TX', 'WY'];
   let standardDeduction = 0;
   
   // Define brackets based on state and filing status
@@ -259,7 +260,7 @@ function calculateStateTax(salary, state, filingStatus) {
     brackets = [
       { threshold: 0, rate: 0.0539 }
     ];
-  } else if (state === 'TX' || state === 'WA') {
+  } else if (noIncomeTax.includes(state)) {
     // Texas and Washington have no state income tax
     return 0;
   }
