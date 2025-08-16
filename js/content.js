@@ -876,9 +876,9 @@ const observer = new MutationObserver(function(mutations) {
       if (mutation.type === 'childList') {
         const hasRelevantChanges = Array.from(mutation.addedNodes).some(node => {
           if (node.nodeType !== 1) return false;
-          return node.querySelector?.('.MuiTable-root, .percentiles_medianAmount__XO6Ww') ||
+          return node.querySelector?.('.MuiTable-root, [class*="percentiles_medianAmount"]') ||
                  node.classList?.contains('MuiTable-root') ||
-                 node.classList?.contains('percentiles_medianAmount__XO6Ww');
+                 Array.from(node.classList || []).some(cls => cls.includes('percentiles_medianAmount'));
         });
         if (hasRelevantChanges) shouldUpdate = true;
       }
@@ -892,7 +892,7 @@ const observer = new MutationObserver(function(mutations) {
             addAfterTaxColumn();
             addAfterTaxDetailedColumn();
           }
-          if (document.querySelector('.percentiles_medianAmount__XO6Ww')) {
+          if (document.querySelector('[class*="percentiles_medianAmount"]')) {
             duplicateMedianElements();
             duplicatePercentileElements();
             duplicate75thPercentileElements();
@@ -1096,14 +1096,14 @@ function updateAllAfterTaxValues() {
 
 function duplicateCompensationElements() {
     // First check if we already added the after-tax elements
-    const existingAfterTaxLabel = Array.from(document.querySelectorAll('dt.level_breakdownLabel__SYlC4'))
+    const existingAfterTaxLabel = Array.from(document.querySelectorAll('dt[class*="level_breakdownLabel"]'))
         .find(el => el.textContent.startsWith("After Tax"));
     if (existingAfterTaxLabel) {
         return; // Exit if we already added the elements
     }
 
-    const labelElement = document.querySelector('dt.level_breakdownLabel__SYlC4');
-    const valueElement = document.querySelector('dd.level_totalComp__dFDpB');
+    const labelElement = document.querySelector('dt[class*="level_breakdownLabel"]');
+    const valueElement = document.querySelector('dd[class*="level_totalComp"]');
 
     if (labelElement && valueElement) {
         // Create clones
@@ -1174,8 +1174,8 @@ function duplicateCompensationElements() {
 const compensationObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
         if (mutation.type === 'childList') {
-            const labelElement = document.querySelector('dt.level_breakdownLabel__SYlC4');
-            const valueElement = document.querySelector('dd.level_totalComp__dFDpB');
+            const labelElement = document.querySelector('dt[class*="level_breakdownLabel"]');
+            const valueElement = document.querySelector('dd[class*="level_totalComp"]');
             
             if (labelElement && valueElement) {
                 // Wait for settings to be loaded before adding elements
@@ -1328,12 +1328,12 @@ detailedTableObserver.observe(document.body, {
 // Function to duplicate median elements and show after-tax values
 function duplicateMedianElements() {
     // Check if already added
-    const existingAfterTaxMedian = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
+    const existingAfterTaxMedian = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
         .find(el => el.textContent.includes('After Tax'));
     if (existingAfterTaxMedian) return;
 
-    const amountElement = document.querySelector('.percentiles_medianAmount__XO6Ww');
-    const labelElement = document.querySelector('.percentiles_percentileLabel__8qVrS');
+    const amountElement = document.querySelector('[class*="percentiles_medianAmount"]');
+    const labelElement = document.querySelector('[class*="percentiles_percentileLabel"]');
 
     if (amountElement && labelElement) {
         // Create clones
@@ -1396,13 +1396,13 @@ function duplicateMedianElements() {
 // Function to duplicate percentile elements with the same pattern
 function duplicatePercentileElements() {
     // Check if already added
-    const existingAfterTaxPercentile = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
+    const existingAfterTaxPercentile = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
         .find(el => el.textContent.includes('After Tax 25th%'));
     if (existingAfterTaxPercentile) return;
 
-    const barElement = document.querySelector('.percentiles_percentileBar___ll7Y');
-    const amountElement = document.querySelector('.percentiles_percentileBar___ll7Y + .css-es1xmb');
-    const labelElement = document.querySelector('.percentiles_percentileBar___ll7Y + .css-es1xmb + .percentiles_percentileLabel__8qVrS');
+    const barElement = document.querySelector('[class*="percentiles_percentileBar"]');
+    const amountElement = document.querySelector('[class*="percentiles_percentileBar"] + .css-es1xmb');
+    const labelElement = document.querySelector('[class*="percentiles_percentileBar"] + .css-es1xmb + [class*="percentiles_percentileLabel"]');
 
     if (barElement && amountElement && labelElement) {
         // Create clones
@@ -1456,13 +1456,13 @@ function duplicatePercentileElements() {
 
 // Update 75th and 90th percentile functions similarly
 function duplicate75thPercentileElements() {
-    const existingAfterTax75thPercentile = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
+    const existingAfterTax75thPercentile = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
         .find(el => el.textContent.includes('After Tax 75th%'));
     if (existingAfterTax75thPercentile) return;
 
-    const allBars = document.querySelectorAll('.percentiles_percentileBar___ll7Y');
+    const allBars = document.querySelectorAll('[class*="percentiles_percentileBar"]');
     const barElement = Array.from(allBars).find((bar, index) => {
-        const nextLabel = bar.parentNode.querySelector('.percentiles_percentileLabel__8qVrS');
+        const nextLabel = bar.parentNode.querySelector('[class*="percentiles_percentileLabel"]');
         return nextLabel && nextLabel.textContent.includes('75th%');
     });
 
@@ -1470,7 +1470,7 @@ function duplicate75thPercentileElements() {
 
     const container = barElement.parentNode;
     const amountElement = container.querySelector('.css-es1xmb');
-    const labelElement = container.querySelector('.percentiles_percentileLabel__8qVrS');
+    const labelElement = container.querySelector('[class*="percentiles_percentileLabel"]');
 
     if (barElement && amountElement && labelElement) {
         const barClone = barElement.cloneNode(true);
@@ -1514,13 +1514,13 @@ function duplicate75thPercentileElements() {
 }
 
 function duplicate90thPercentileElements() {
-    const existingAfterTax90thPercentile = Array.from(document.querySelectorAll('.percentiles_percentileLabel__8qVrS'))
+    const existingAfterTax90thPercentile = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
         .find(el => el.textContent.includes('After Tax 90th%'));
     if (existingAfterTax90thPercentile) return;
 
-    const allBars = document.querySelectorAll('.percentiles_percentileBar___ll7Y');
+    const allBars = document.querySelectorAll('[class*="percentiles_percentileBar"]');
     const barElement = Array.from(allBars).find((bar, index) => {
-        const nextLabel = bar.parentNode.querySelector('.percentiles_percentileLabel__8qVrS');
+        const nextLabel = bar.parentNode.querySelector('[class*="percentiles_percentileLabel"]');
         return nextLabel && nextLabel.textContent.includes('90th%');
     });
 
@@ -1528,7 +1528,7 @@ function duplicate90thPercentileElements() {
 
     const container = barElement.parentNode;
     const amountElement = container.querySelector('.css-es1xmb');
-    const labelElement = container.querySelector('.percentiles_percentileLabel__8qVrS');
+    const labelElement = container.querySelector('[class*="percentiles_percentileLabel"]');
 
     if (barElement && amountElement && labelElement) {
         const barClone = barElement.cloneNode(true);
@@ -1575,8 +1575,8 @@ function duplicate90thPercentileElements() {
 const medianObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
         if (mutation.type === 'childList') {
-            const medianAmount = document.querySelector('.percentiles_medianAmount__XO6Ww');
-            const medianLabel = document.querySelector('.percentiles_percentileLabel__8qVrS');
+            const medianAmount = document.querySelector('[class*="percentiles_medianAmount"]');
+            const medianLabel = document.querySelector('[class*="percentiles_percentileLabel"]');
             
             if (medianAmount && medianLabel) {
                 chrome.storage.sync.get(['taxSettings'], function(result) {
@@ -1587,8 +1587,8 @@ const medianObserver = new MutationObserver((mutations) => {
                 });
             }
 
-            const allBars = document.querySelectorAll('.percentiles_percentileBar___ll7Y');
-            const labels = document.querySelectorAll('.percentiles_percentileLabel__8qVrS');
+            const allBars = document.querySelectorAll('[class*="percentiles_percentileBar"]');
+            const labels = document.querySelectorAll('[class*="percentiles_percentileLabel"]');
             
             const has25thPercentile = Array.from(labels).some(label => label.textContent.includes('25th%'));
             const has75thPercentile = Array.from(labels).some(label => label.textContent.includes('75th%'));
