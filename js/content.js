@@ -2,9 +2,10 @@
 
 // Default settings
 let taxSettings = {
-  state: 'WA',
+  state: 'CA',
   filingStatus: 'Single',
-  localTax: 'sj' // Default to San Jose for California
+  localTax: 'sj', // Default to San Jose for California
+  partnerSalary: 0 // Default partner salary for joint filing
 };
 
 let columnSettings = {
@@ -62,7 +63,7 @@ chrome.storage.sync.get(['taxSettings', 'columnSettings'], function(result) {
 });
 
 // Tax calculation functions
-function calculateFederalTax(salary, filingStatus) {
+function calculateFederalTax(salary, filingStatus, partnerSalary = 0) {
   // 2023 Federal tax brackets (simplified)
   let brackets;
   
@@ -120,8 +121,14 @@ function calculateFederalTax(salary, filingStatus) {
     standardDeduction = 15000;
   }
   
+  // For joint filing, calculate tax on combined income, then allocate proportionally
+  let totalIncome = salary;
+  if (filingStatus === 'Married Filing Jointly' && partnerSalary > 0) {
+    totalIncome = salary + partnerSalary;
+  }
+  
   // Taxable income after standard deduction
-  let taxableIncome = Math.max(0, salary - standardDeduction);
+  let taxableIncome = Math.max(0, totalIncome - standardDeduction);
   
   // Calculate tax
   let tax = 0;
@@ -140,10 +147,16 @@ function calculateFederalTax(salary, filingStatus) {
     }
   }
   
+  // For joint filing, allocate tax proportionally based on individual income
+  if (filingStatus === 'Married Filing Jointly' && partnerSalary > 0) {
+    const individualProportion = salary / totalIncome;
+    tax = tax * individualProportion;
+  }
+  
   return tax;
 }
 
-function calculateStateTax(salary, state, filingStatus) {
+function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
   // State tax brackets for 2023
   let brackets = [];
   let standardDeduction = 0;
@@ -264,8 +277,14 @@ function calculateStateTax(salary, state, filingStatus) {
     return 0;
   }
   
+  // For joint filing, calculate tax on combined income, then allocate proportionally
+  let totalIncome = salary;
+  if (filingStatus === 'Married Filing Jointly' && partnerSalary > 0) {
+    totalIncome = salary + partnerSalary;
+  }
+  
   // Taxable income after state standard deduction
-  let taxableIncome = Math.max(0, salary - standardDeduction);
+  let taxableIncome = Math.max(0, totalIncome - standardDeduction);
   
   // Calculate tax using brackets
   let tax = 0;
@@ -282,6 +301,12 @@ function calculateStateTax(salary, state, filingStatus) {
         tax += bracketIncome * brackets[i].rate;
       }
     }
+  }
+  
+  // For joint filing, allocate tax proportionally based on individual income
+  if (filingStatus === 'Married Filing Jointly' && partnerSalary > 0) {
+    const individualProportion = salary / totalIncome;
+    tax = tax * individualProportion;
   }
   
   return tax;
@@ -374,8 +399,9 @@ function parseLocationFromRow(row) {
 function calculateTotalTax(salary, location = null) {
   // If no location provided, use default settings
   if (!location) {
-    const federalTax = calculateFederalTax(salary, taxSettings.filingStatus);
-    const stateTax = calculateStateTax(salary, taxSettings.state, taxSettings.filingStatus);
+    const partnerSalary = taxSettings.partnerSalary || 0;
+    const federalTax = calculateFederalTax(salary, taxSettings.filingStatus, partnerSalary);
+    const stateTax = calculateStateTax(salary, taxSettings.state, taxSettings.filingStatus, partnerSalary);
     const localTax = calculateLocalTax(salary, taxSettings.state, taxSettings.localTax, taxSettings.filingStatus);
     const ficaTax = calculateFICATax(salary);
     
@@ -389,8 +415,9 @@ function calculateTotalTax(salary, location = null) {
   }
   
   // Use location-specific calculation
-  const federalTax = calculateFederalTax(salary, taxSettings.filingStatus);
-  const stateTax = calculateStateTax(salary, location.state, taxSettings.filingStatus);
+  const partnerSalary = taxSettings.partnerSalary || 0;
+  const federalTax = calculateFederalTax(salary, taxSettings.filingStatus, partnerSalary);
+  const stateTax = calculateStateTax(salary, location.state, taxSettings.filingStatus, partnerSalary);
   const ficaTax = calculateFICATax(salary);
   
   // Handle location-specific cases

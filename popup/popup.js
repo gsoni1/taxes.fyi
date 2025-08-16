@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const localTaxContainer = document.getElementById('localTaxContainer');
   const localTaxSelect = document.getElementById('localTax');
   
+  // Set up filing status change handler to show/hide partner salary
+  const filingStatusSelect = document.getElementById('filingStatus');
+  const partnerSalaryContainer = document.getElementById('partnerSalaryContainer');
+  const partnerSalaryInput = document.getElementById('partnerSalary');
+  
   function updateLocalTaxOptions() {
     const selectedState = stateSelect.value;
     
@@ -51,14 +56,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Set up event listener for state changes
+  function updatePartnerSalaryVisibility() {
+    const selectedFilingStatus = filingStatusSelect.value;
+    
+    // Show partner salary input only for "Married Filing Jointly"
+    if (selectedFilingStatus === 'Married Filing Jointly') {
+      partnerSalaryContainer.style.display = 'block';
+    } else {
+      partnerSalaryContainer.style.display = 'none';
+    }
+  }
+  
+  // Set up event listeners
   stateSelect.addEventListener('change', updateLocalTaxOptions);
+  filingStatusSelect.addEventListener('change', updatePartnerSalaryVisibility);
   
   // Load saved settings
   chrome.storage.sync.get(['taxSettings', 'columnSettings'], function(result) {
     if (result.taxSettings) {
       document.getElementById('state').value = result.taxSettings.state;
       document.getElementById('filingStatus').value = result.taxSettings.filingStatus;
+      
+      // Set partner salary if it exists (convert from dollars to thousands for display)
+      if (result.taxSettings.partnerSalary) {
+        document.getElementById('partnerSalary').value = Math.round(result.taxSettings.partnerSalary / 1000);
+      }
       
       // Set local tax if it exists
       if (result.taxSettings.localTax) {
@@ -73,8 +95,9 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('addNewColumn').checked = result.columnSettings.addNewColumn;
     }
     
-    // Initialize local tax options based on current state
+    // Initialize visibility and options based on current selections
     updateLocalTaxOptions();
+    updatePartnerSalaryVisibility();
   });
   
   // Save settings when button is clicked
@@ -83,11 +106,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const filingStatus = document.getElementById('filingStatus').value;
     const addNewColumn = document.getElementById('addNewColumn').checked;
     const localTax = document.getElementById('localTax').value;
+    const partnerSalary = document.getElementById('partnerSalary').value;
     
     const taxSettings = {
       state: state,
       filingStatus: filingStatus,
-      localTax: localTax
+      localTax: localTax,
+      partnerSalary: partnerSalary ? parseInt(partnerSalary) * 1000 : 0 // Convert thousands to dollars
     };
     
     const columnSettings = {

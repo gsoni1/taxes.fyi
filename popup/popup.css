@@ -38,13 +38,20 @@ label {
   color: #333;
 }
 
-select {
+select, input[type="number"] {
   width: 100%;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
   background-color: white;
+  box-sizing: border-box;
+}
+
+input[type="number"]:focus {
+  outline: none;
+  border-color: #4c5d67;
+  box-shadow: 0 0 0 2px rgba(76, 93, 103, 0.2);
 }
 
 button {
