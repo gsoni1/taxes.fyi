@@ -655,7 +655,7 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
           if (!headerRow) return;
           
           // Skip detailed tables
-          if (headerRow.querySelector('.salary-table_sortTableHeaderText__ZYL7k')) return;
+          if (headerRow.querySelector('p[class*="salary-table_sortTableHeaderText"]')) return;
           
           removeAfterTaxColumn(table);
         });
@@ -670,7 +670,7 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
           if (!headerRow) return;
           
           // Skip detailed tables
-          if (headerRow.querySelector('.salary-table_sortTableHeaderText__ZYL7k')) return;
+          if (headerRow.querySelector('p[class*="salary-table_sortTableHeaderText"]')) return;
           
           updateNormalTableValues(table);
         });
@@ -1200,8 +1200,8 @@ compensationObserver.observe(document.body, {
 function addAfterTaxDetailedColumn() {
   console.log('Taxes.fyi: Looking for detailed compensation tables...');
   
-  // Find tables with detailed compensation headers
-  const detailedHeaders = document.querySelectorAll('th .salary-table_sortTableHeaderText__ZYL7k');
+  // Find tables with detailed compensation headers (using flexible selector for CSS modules)
+  const detailedHeaders = document.querySelectorAll('th p[class*="salary-table_sortTableHeaderText"]');
   
   detailedHeaders.forEach((header, index) => {
     if (header.textContent.includes('Total Compensation')) {
@@ -1211,7 +1211,7 @@ function addAfterTaxDetailedColumn() {
       
       // Check if we already added the column
       const existingDetailedHeader = Array.from(headerRow.querySelectorAll('th'))
-        .find(th => th.querySelector('.salary-table_sortTableHeaderText__ZYL7k')?.textContent.includes('After Tax'));
+        .find(th => th.querySelector('p[class*="salary-table_sortTableHeaderText"]')?.textContent.includes('After Tax'));
       
       if (existingDetailedHeader) return;
       
@@ -1230,15 +1230,8 @@ function addAfterTaxDetailedColumn() {
       headerDiv.className = 'salary-table_sortTableHeader__9OJDE';
       
       const headerText = document.createElement('p');
-      headerText.className = 'MuiTypography-root MuiTypography-body2 salary-table_sortTableHeaderText__ZYL7k css-2o2hpw';
+      headerText.className = 'MuiTypography-root MuiTypography-body2 salary-table_sortTableHeaderText__IE_ZE css-2o2hpw';
       headerText.textContent = 'After Tax';
-      
-      const currencyButton = document.createElement('button');
-      currencyButton.type = 'button';
-      currencyButton.className = 'salary-table_currencyLabel__4PkwP';
-      currencyButton.textContent = '';
-      
-      headerText.appendChild(currencyButton);
       headerDiv.appendChild(headerText);
       
       const subText = document.createElement('span');
@@ -1316,7 +1309,7 @@ const detailedTableObserver = new MutationObserver((mutations) => {
     if (mutation.type === 'childList') {
       const addedNodes = Array.from(mutation.addedNodes);
       const hasDetailedTable = addedNodes.some(node => 
-        node.nodeType === 1 && node.querySelector?.('.salary-table_sortTableHeaderText__ZYL7k')
+        node.nodeType === 1 && node.querySelector?.('p[class*="salary-table_sortTableHeaderText"]')
       );
       
       if (hasDetailedTable) {

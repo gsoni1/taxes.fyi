@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Taxes.fyi",
+  "name": "taxes.fyi",
   "version": "1.0",
-  "description": "Calculate after-tax salaries for levels.fyi salary tables",
+  "description": "Effortlessly see after-tax salary estimates directly on levels.fyi",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["*://*.levels.fyi/*"],
   "action": {
