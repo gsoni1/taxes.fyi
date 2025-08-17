@@ -602,7 +602,8 @@ function addAfterTaxColumn() {
       
       const stateAbbr = taxSettings.state;
       const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                              taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+                              taxSettings.filingStatus === 'Head of Household' ? 'Head' :
+                              taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
       
       const infoSpan = document.createElement('span');
       infoSpan.className = 'MuiTypography-root MuiTypography-caption job-family_secondary__YtLA8 css-b4wlzm';
@@ -705,20 +706,23 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       const shouldAddNewColumn = columnSettings.addNewColumn;
       
       if (shouldAddNewColumn) {
-        // Remove all existing after-tax columns
+        // Remove all existing after-tax columns from normal tables
         const tables = document.querySelectorAll('.MuiTable-root');
         tables.forEach(table => {
           const headerRow = table.querySelector('thead tr');
           if (!headerRow) return;
           
-          // Skip detailed tables
+          // Skip detailed tables for removal (they handle multiple columns differently)
           if (headerRow.querySelector('p[class*="salary-table_sortTableHeaderText"]')) return;
           
           removeAfterTaxColumn(table);
         });
         
         // Add new after-tax columns with updated calculations
-        setTimeout(addAfterTaxColumn, 500);
+        setTimeout(() => {
+          addAfterTaxColumn();
+          addAfterTaxDetailedColumn();
+        }, 500);
       } else {
         // Update values in existing after-tax columns
         const tables = document.querySelectorAll('.MuiTable-root');
@@ -726,10 +730,13 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
           const headerRow = table.querySelector('thead tr');
           if (!headerRow) return;
           
-          // Skip detailed tables
-          if (headerRow.querySelector('p[class*="salary-table_sortTableHeaderText"]')) return;
-          
-          updateNormalTableValues(table);
+          if (headerRow.querySelector('p[class*="salary-table_sortTableHeaderText"]')) {
+            // This is a detailed table - update its after-tax values
+            updateDetailedTableValues(table);
+          } else {
+            // This is a normal table - update its after-tax values
+            updateNormalTableValues(table);
+          }
         });
       }
     }
@@ -761,6 +768,67 @@ function removeAfterTaxColumn(table) {
   });
 }
 
+// Function to update values in detailed (submitted salaries) table
+function updateDetailedTableValues(table) {
+  const headerRow = table.querySelector('thead tr');
+  if (!headerRow) return;
+  
+  // Find the "After Tax" column in the detailed table
+  const afterTaxHeader = Array.from(headerRow.querySelectorAll('th'))
+    .find(th => th.querySelector('p[class*="salary-table_sortTableHeaderText"]')?.textContent.includes('After Tax'));
+  
+  if (!afterTaxHeader) return; // No after-tax column exists
+  
+  // Find the "Total Compensation" column
+  const totalCompHeader = Array.from(headerRow.querySelectorAll('th'))
+    .find(th => th.querySelector('p[class*="salary-table_sortTableHeaderText"]')?.textContent.includes('Total Compensation'));
+  
+  if (!totalCompHeader) return;
+  
+  const afterTaxColumnIndex = Array.from(headerRow.children).indexOf(afterTaxHeader);
+  const totalCompColumnIndex = Array.from(headerRow.children).indexOf(totalCompHeader);
+  
+  // Update the header text with current filing status
+  const subTextElement = afterTaxHeader.querySelector('.css-12nofzu');
+  if (subTextElement) {
+    const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                            taxSettings.filingStatus === 'Head of Household' ? 'Head' :
+                            taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+    subTextElement.textContent = `(By location, ${filingStatusAbbr})`;
+  }
+  
+  // Update all rows in the detailed table
+  const rows = table.querySelectorAll('tbody tr');
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    
+    if (totalCompColumnIndex >= cells.length || afterTaxColumnIndex >= cells.length) return;
+    
+    const totalCell = cells[totalCompColumnIndex];
+    const afterTaxCell = cells[afterTaxColumnIndex];
+    
+    const totalValueElement = totalCell.querySelector('.MuiTypography-body1');
+    const afterTaxValueElement = afterTaxCell.querySelector('.MuiTypography-body1');
+    
+    if (!totalValueElement || !afterTaxValueElement) return;
+    
+    const totalValue = parseSalaryString(totalValueElement.textContent);
+    const location = parseLocationFromRow(row);
+    
+    // Recalculate after-tax value with current settings
+    if (totalValue > 0 && location) {
+      const totalTax = calculateTotalTax(totalValue, location);
+      if (totalTax !== null) {
+        afterTaxValueElement.textContent = formatExactSalary(totalValue - totalTax);
+      } else {
+        afterTaxValueElement.textContent = '$---';
+      }
+    } else {
+      afterTaxValueElement.textContent = '$---';
+    }
+  });
+}
+
 // Function to update values in normal (non-detailed) table
 function updateNormalTableValues(table) {
   const headerRow = table.querySelector('thead tr');
@@ -785,7 +853,8 @@ function updateNormalTableValues(table) {
   const afterTaxHeader = headerCells[afterTaxColumnIndex];
   const stateAbbr = taxSettings.state;
   const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                         taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+                         taxSettings.filingStatus === 'Head of Household' ? 'Head' :
+                         taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
   
   // Find or create the info span
   let infoSpan = afterTaxHeader.querySelector('span');
@@ -856,7 +925,8 @@ function updateTableValues(table) {
   const afterTaxHeader = headerCells[afterTaxColumnIndex];
   const stateAbbr = taxSettings.state;
   const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                         taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+                         taxSettings.filingStatus === 'Head of Household' ? 'Head' :
+                         taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
   
   // Find or create the info span
   let infoSpan = afterTaxHeader.querySelector('span');
@@ -1186,7 +1256,8 @@ function duplicateCompensationElements() {
         const updateLabelText = () => {
             const stateAbbr = taxSettings.state;
             const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                                   taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+                                   taxSettings.filingStatus === 'Head of Household' ? 'Head' :
+                         taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
             labelClone.textContent = `After Tax ${formatAfterTaxLabel(stateAbbr, filingStatusAbbr)}`;
         };
 
@@ -1308,7 +1379,13 @@ function addAfterTaxDetailedColumn() {
       
       const subText = document.createElement('span');
       subText.className = 'MuiTypography-root MuiTypography-caption css-12nofzu';
-      subText.textContent = '(By location)';
+      
+      // Create filing status abbreviation
+      const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                              taxSettings.filingStatus === 'Head of Household' ? 'Head' :
+                              taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+      
+      subText.textContent = `(By location, ${filingStatusAbbr})`;
       headerDiv.appendChild(subText);
       
       sortLabel.appendChild(headerDiv);
@@ -1421,7 +1498,8 @@ function duplicateMedianElements() {
         } else {
             const stateAbbr = taxSettings.state;
             const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                                   taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+                                   taxSettings.filingStatus === 'Head of Household' ? 'Head' :
+                         taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
             labelClone.textContent = `After Tax ${formatAfterTaxLabel(stateAbbr, filingStatusAbbr)}`;
         }
 
@@ -1450,7 +1528,8 @@ function duplicateMedianElements() {
                 } else {
                     const stateAbbr = newSettings.state;
                     const filingStatusAbbr = newSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                                           newSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
+                                           newSettings.filingStatus === 'Head of Household' ? 'Head' :
+                                           newSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
                     labelClone.textContent = `After Tax ${formatAfterTaxLabel(stateAbbr, filingStatusAbbr)}`;
                 }
                 
