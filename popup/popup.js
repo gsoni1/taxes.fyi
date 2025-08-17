@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const filingStatusSelect = document.getElementById('filingStatus');
   const partnerSalaryContainer = document.getElementById('partnerSalaryContainer');
   const partnerSalaryInput = document.getElementById('partnerSalary');
+  const matchMySalaryCheckbox = document.getElementById('matchMySalary');
+  const partnerSalaryInputContainer = document.getElementById('partnerSalaryInputContainer');
   
   function updateLocalTaxOptions() {
     const selectedState = stateSelect.value;
@@ -67,9 +69,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
+  function updatePartnerSalaryInputVisibility() {
+    const isMatchMySalary = matchMySalaryCheckbox.checked;
+    
+    // Hide manual input when "match my salary" is checked
+    if (isMatchMySalary) {
+      partnerSalaryInputContainer.style.display = 'none';
+      partnerSalaryInput.value = ''; // Clear the manual input
+    } else {
+      partnerSalaryInputContainer.style.display = 'block';
+    }
+  }
+  
   // Set up event listeners
   stateSelect.addEventListener('change', updateLocalTaxOptions);
   filingStatusSelect.addEventListener('change', updatePartnerSalaryVisibility);
+  matchMySalaryCheckbox.addEventListener('change', updatePartnerSalaryInputVisibility);
   
   // Load saved settings
   chrome.storage.sync.get(['taxSettings', 'columnSettings'], function(result) {
@@ -80,6 +95,11 @@ document.addEventListener('DOMContentLoaded', function() {
       // Set partner salary if it exists (convert from dollars to thousands for display)
       if (result.taxSettings.partnerSalary) {
         document.getElementById('partnerSalary').value = Math.round(result.taxSettings.partnerSalary / 1000);
+      }
+      
+      // Set match my salary checkbox if it exists
+      if (result.taxSettings.matchMySalary) {
+        document.getElementById('matchMySalary').checked = result.taxSettings.matchMySalary;
       }
       
       // Set local tax if it exists
@@ -98,7 +118,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize visibility and options based on current selections
     updateLocalTaxOptions();
     updatePartnerSalaryVisibility();
+    updatePartnerSalaryInputVisibility();
   });
+  
+  // Ensure visibility is set correctly on popup open (fallback for cases where storage loads slowly)
+  setTimeout(() => {
+    updatePartnerSalaryVisibility();
+    updatePartnerSalaryInputVisibility();
+  }, 100);
   
   // Save settings when button is clicked
   document.getElementById('saveButton').addEventListener('click', function() {
@@ -107,12 +134,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const addNewColumn = document.getElementById('addNewColumn').checked;
     const localTax = document.getElementById('localTax').value;
     const partnerSalary = document.getElementById('partnerSalary').value;
+    const matchMySalary = document.getElementById('matchMySalary').checked;
+    
+    // Validation: Check if joint filing but no partner salary provided
+    if (filingStatus === 'Married Filing Jointly' && !matchMySalary && (!partnerSalary || partnerSalary.trim() === '')) {
+      // Show error message
+      const status = document.getElementById('status');
+      status.textContent = 'Enter a Partner Salary!';
+      status.className = 'status error';
+      
+      // Hide message after 3 seconds
+      setTimeout(function() {
+        status.className = 'status';
+      }, 3000);
+      
+      return; // Don't save settings
+    }
     
     const taxSettings = {
       state: state,
       filingStatus: filingStatus,
       localTax: localTax,
-      partnerSalary: partnerSalary ? parseInt(partnerSalary) * 1000 : 0 // Convert thousands to dollars
+      partnerSalary: partnerSalary ? parseInt(partnerSalary) * 1000 : 0, // Convert thousands to dollars
+      matchMySalary: matchMySalary
     };
     
     const columnSettings = {

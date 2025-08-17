@@ -5,7 +5,8 @@ let taxSettings = {
   state: 'CA',
   filingStatus: 'Single',
   localTax: 'sj', // Default to San Jose for California
-  partnerSalary: 0 // Default partner salary for joint filing
+  partnerSalary: 0, // Default partner salary for joint filing
+  matchMySalary: false // Default to not matching user's salary
 };
 
 let columnSettings = {
@@ -383,6 +384,23 @@ function calculateLocalTax(salary, state, localTax, filingStatus) {
   return 0;
 }
 
+// Helper function to format after-tax label with partner salary info
+function formatAfterTaxLabel(stateAbbr, filingStatusAbbr, includePartnerSalary = true) {
+  let label = `${stateAbbr}, ${filingStatusAbbr}`;
+  
+  // Add partner salary info for joint filing
+  if (includePartnerSalary && taxSettings.filingStatus === 'Married Filing Jointly') {
+    if (taxSettings.matchMySalary) {
+      label += ' +Partner';
+    } else if (taxSettings.partnerSalary > 0) {
+      const partnerSalaryK = Math.round(taxSettings.partnerSalary / 1000);
+      label += ` +${partnerSalaryK}K`;
+    }
+  }
+  
+  return `(${label})`;
+}
+
 // Add new helper function to parse location data
 function parseLocationFromRow(row) {
   const locationSpan = row.querySelector('.MuiTypography-caption.css-xlmjpr');
@@ -399,7 +417,8 @@ function parseLocationFromRow(row) {
 function calculateTotalTax(salary, location = null) {
   // If no location provided, use default settings
   if (!location) {
-    const partnerSalary = taxSettings.partnerSalary || 0;
+    // Use current salary as partner salary if match toggle is enabled
+    const partnerSalary = taxSettings.matchMySalary ? salary : (taxSettings.partnerSalary || 0);
     const federalTax = calculateFederalTax(salary, taxSettings.filingStatus, partnerSalary);
     const stateTax = calculateStateTax(salary, taxSettings.state, taxSettings.filingStatus, partnerSalary);
     const localTax = calculateLocalTax(salary, taxSettings.state, taxSettings.localTax, taxSettings.filingStatus);
@@ -415,7 +434,8 @@ function calculateTotalTax(salary, location = null) {
   }
   
   // Use location-specific calculation
-  const partnerSalary = taxSettings.partnerSalary || 0;
+  // Use current salary as partner salary if match toggle is enabled
+  const partnerSalary = taxSettings.matchMySalary ? salary : (taxSettings.partnerSalary || 0);
   const federalTax = calculateFederalTax(salary, taxSettings.filingStatus, partnerSalary);
   const stateTax = calculateStateTax(salary, location.state, taxSettings.filingStatus, partnerSalary);
   const ficaTax = calculateFICATax(salary);
@@ -586,7 +606,7 @@ function addAfterTaxColumn() {
       
       const infoSpan = document.createElement('span');
       infoSpan.className = 'MuiTypography-root MuiTypography-caption job-family_secondary__YtLA8 css-b4wlzm';
-      infoSpan.textContent = `(${stateAbbr}, ${filingStatusAbbr})`;
+      infoSpan.textContent = formatAfterTaxLabel(stateAbbr, filingStatusAbbr);
       
       newHeaderCell.appendChild(headerTitle);
       newHeaderCell.appendChild(infoSpan);
@@ -771,7 +791,7 @@ function updateNormalTableValues(table) {
   }
   
   // Update the text
-  infoSpan.textContent = `(${stateAbbr}, ${filingStatusAbbr})`;
+  infoSpan.textContent = formatAfterTaxLabel(stateAbbr, filingStatusAbbr);
   
   // Update values in rows
   const rows = table.querySelectorAll('tbody tr');
@@ -842,7 +862,7 @@ function updateTableValues(table) {
   }
   
   // Update the text
-  infoSpan.textContent = `(${stateAbbr}, ${filingStatusAbbr})`;
+  infoSpan.textContent = formatAfterTaxLabel(stateAbbr, filingStatusAbbr);
   
   // Update values in rows
   const rows = table.querySelectorAll('tbody tr');
@@ -1142,7 +1162,7 @@ function duplicateCompensationElements() {
             const stateAbbr = taxSettings.state;
             const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
                                    taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
-            labelClone.textContent = `After Tax (${stateAbbr}, ${filingStatusAbbr})`;
+            labelClone.textContent = `After Tax ${formatAfterTaxLabel(stateAbbr, filingStatusAbbr)}`;
         };
 
         // Set initial label text
@@ -1377,7 +1397,7 @@ function duplicateMedianElements() {
             const stateAbbr = taxSettings.state;
             const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
                                    taxSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
-            labelClone.textContent = `After Tax (${stateAbbr}, ${filingStatusAbbr})`;
+            labelClone.textContent = `After Tax ${formatAfterTaxLabel(stateAbbr, filingStatusAbbr)}`;
         }
 
         // Calculate after-tax amount
@@ -1406,7 +1426,7 @@ function duplicateMedianElements() {
                     const stateAbbr = newSettings.state;
                     const filingStatusAbbr = newSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
                                            newSettings.filingStatus === 'Head of Household' ? 'Head' : 'Single';
-                    labelClone.textContent = `After Tax (${stateAbbr}, ${filingStatusAbbr})`;
+                    labelClone.textContent = `After Tax ${formatAfterTaxLabel(stateAbbr, filingStatusAbbr)}`;
                 }
                 
                 // Update amount

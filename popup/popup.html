@@ -41,8 +41,14 @@
     </div>
     
     <div class="form-group" id="partnerSalaryContainer" style="display: none;">
-      <label for="partnerSalary">Partner's Annual Salary (for joint filing):</label>
-      <input type="number" id="partnerSalary" placeholder="e.g. 120k" min="0" step="1">
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="matchMySalary" name="matchMySalary">
+        <label for="matchMySalary">Partner has same salary as me</label>
+      </div>
+      <div id="partnerSalaryInputContainer">
+        <label for="partnerSalary">Partner's Annual Salary (in thousands):</label>
+        <input type="number" id="partnerSalary" placeholder="e.g. 120k" min="0" step="1">
+      </div>
     </div>
     
     <div class="form-group checkbox-group">

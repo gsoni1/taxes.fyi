@@ -3,7 +3,7 @@
   "name": "taxes.fyi",
   "version": "1.0",
   "description": "Effortlessly see after-tax salary estimates directly on levels.fyi",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage"],
   "host_permissions": ["*://*.levels.fyi/*"],
   "action": {
     "default_popup": "popup/popup.html",
