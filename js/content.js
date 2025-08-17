@@ -688,9 +688,19 @@ function addAfterTaxColumn() {
 // Modify the settings change listener to handle all table types
 chrome.storage.onChanged.addListener(function(changes, namespace) {
   if (namespace === 'sync') {
+    // Update both settings first
+    if (changes.taxSettings) {
+      taxSettings = changes.taxSettings.newValue;
+    }
+    
+    if (changes.columnSettings) {
+      console.log('Taxes.fyi: Column settings changed');
+      columnSettings = changes.columnSettings.newValue;
+    }
+    
+    // Only process tax settings changes after both settings are updated
     if (changes.taxSettings) {
       console.log('Taxes.fyi: Tax settings changed, updating calculations...');
-      taxSettings = changes.taxSettings.newValue;
       
       const shouldAddNewColumn = columnSettings.addNewColumn;
       
@@ -722,11 +732,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
           updateNormalTableValues(table);
         });
       }
-    }
-    
-    if (changes.columnSettings) {
-      console.log('Taxes.fyi: Column settings changed');
-      columnSettings = changes.columnSettings.newValue;
     }
   }
 });
@@ -936,8 +941,28 @@ const observer = new MutationObserver(function(mutations) {
       setTimeout(() => {
         try {
           if (document.querySelector('.MuiTable-root')) {
-            addAfterTaxColumn();
-            addAfterTaxDetailedColumn();
+            // Check if columns already exist
+            const existingAfterTaxHeaders = Array.from(document.querySelectorAll('th h6')).filter(h => 
+              h.textContent.trim() === 'After Tax ');
+            
+            if (existingAfterTaxHeaders.length > 0) {
+              // Columns exist - only update values, don't create new columns
+              console.log('Taxes.fyi: After Tax columns exist, updating values only');
+              const tables = document.querySelectorAll('.MuiTable-root');
+              tables.forEach(table => {
+                const headerRow = table.querySelector('thead tr');
+                if (!headerRow) return;
+                
+                // Skip detailed tables
+                if (headerRow.querySelector('p[class*="salary-table_sortTableHeaderText"]')) return;
+                
+                updateNormalTableValues(table);
+              });
+            } else {
+              // No columns exist - create them
+              addAfterTaxColumn();
+              addAfterTaxDetailedColumn();
+            }
           }
           if (document.querySelector('[class*="percentiles_medianAmount"]')) {
             duplicateMedianElements();

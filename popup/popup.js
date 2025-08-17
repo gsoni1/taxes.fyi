@@ -113,6 +113,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (result.columnSettings) {
       document.getElementById('addNewColumn').checked = result.columnSettings.addNewColumn;
+    } else {
+      // Set default value if no settings exist
+      document.getElementById('addNewColumn').checked = false;
     }
     
     // Initialize visibility and options based on current selections
@@ -121,10 +124,19 @@ document.addEventListener('DOMContentLoaded', function() {
     updatePartnerSalaryInputVisibility();
   });
   
-  // Ensure visibility is set correctly on popup open (fallback for cases where storage loads slowly)
+  // Ensure visibility and settings are set correctly on popup open (fallback for cases where storage loads slowly)
   setTimeout(() => {
     updatePartnerSalaryVisibility();
     updatePartnerSalaryInputVisibility();
+    
+    // Re-load settings to ensure checkboxes are properly set
+    chrome.storage.sync.get(['columnSettings'], function(result) {
+      if (result.columnSettings) {
+        document.getElementById('addNewColumn').checked = result.columnSettings.addNewColumn;
+      } else {
+        document.getElementById('addNewColumn').checked = false;
+      }
+    });
   }, 100);
   
   // Save settings when button is clicked
