@@ -397,7 +397,24 @@ function formatAfterTaxLabel(stateAbbr, filingStatusAbbr, includePartnerSalary =
       label += ` +${partnerSalaryK}K`;
     }
   }
+    
+  return `(${label})`;
+}
+
+// Helper function to format after-tax label with partner salary info
+function formatAfterTaxLabelLocationSpecific(filingStatusAbbr, includePartnerSalary = true) {
+  let label = `${filingStatusAbbr}`;
   
+  // Add partner salary info for joint filing
+  if (includePartnerSalary && taxSettings.filingStatus === 'Married Filing Jointly') {
+    if (taxSettings.matchMySalary) {
+      label += ' +Partner';
+    } else if (taxSettings.partnerSalary > 0) {
+      const partnerSalaryK = Math.round(taxSettings.partnerSalary / 1000);
+      label += ` +${partnerSalaryK}K`;
+    }
+  }
+    
   return `(${label})`;
 }
 
@@ -1493,13 +1510,14 @@ function duplicateMedianElements() {
         const location = getLocationFromURL();
         
         // Update label text based on whether we have location info
-        if (location) {
-            labelClone.textContent = `After Tax (${location.city})`;
-        } else {
-            const stateAbbr = taxSettings.state;
-            const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+        const stateAbbr = taxSettings.state;
+        const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
                                    taxSettings.filingStatus === 'Head of Household' ? 'Head' :
                          taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+        if (location) {
+          // labelClone.textContent = `After Tax (${filingStatusAbbr})`;
+          labelClone.textContent = `After Tax ${formatAfterTaxLabelLocationSpecific(filingStatusAbbr, true)}`;
+        } else {
             labelClone.textContent = `After Tax ${formatAfterTaxLabel(stateAbbr, filingStatusAbbr)}`;
         }
 
@@ -1523,13 +1541,13 @@ function duplicateMedianElements() {
                 const newLocation = getLocationFromURL();
                 
                 // Update label
-                if (newLocation) {
-                    labelClone.textContent = `After Tax (${newLocation.city})`;
-                } else {
-                    const stateAbbr = newSettings.state;
-                    const filingStatusAbbr = newSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
+                const stateAbbr = newSettings.state;
+                const filingStatusAbbr = newSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
                                            newSettings.filingStatus === 'Head of Household' ? 'Head' :
                                            newSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+                if (newLocation) {
+                  labelClone.textContent = `After Tax ${formatAfterTaxLabelLocationSpecific(filingStatusAbbr, true)}`;
+                } else {
                     labelClone.textContent = `After Tax ${formatAfterTaxLabel(stateAbbr, filingStatusAbbr)}`;
                 }
                 
