@@ -1,21 +1,27 @@
 // popup.js - Handles the popup UI functionality
 
-// Define local tax options for each state
-const localTaxOptions = {
-  'CA': [
-    { value: 'sj', label: 'San Jose / Los Angeles / San Diego' },
-    { value: 'sf', label: 'San Francisco' }
-  ],
-  'NY': [
-    { value: 'nyc', label: 'New York City' }
-  ]
+// Define location mapping
+const locationMapping = {
+  'CA-sf': { state: 'CA', localTax: 'sf' },
+  'NY-nyc': { state: 'NY', localTax: 'nyc' },
+  'WA': { state: 'WA', localTax: 'none' },
+  'TX': { state: 'TX', localTax: 'none' },
+  'VA': { state: 'VA', localTax: 'none' },
+  'MA': { state: 'MA', localTax: 'none' },
+  'GA': { state: 'GA', localTax: 'none' },
+  'NC': { state: 'NC', localTax: 'none' },
+  'IL': { state: 'IL', localTax: 'none' },
+  'FL': { state: 'FL', localTax: 'none' },
+  'DC': { state: 'DC', localTax: 'none' },
+  'CO': { state: 'CO', localTax: 'none' },
+  'OR': { state: 'OR', localTax: 'none' },
+  'PA': { state: 'PA', localTax: 'none' },
+  'NV': { state: 'NV', localTax: 'none' }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Set up state change handler to show/hide local tax options
-  const stateSelect = document.getElementById('state');
-  const localTaxContainer = document.getElementById('localTaxContainer');
-  const localTaxSelect = document.getElementById('localTax');
+  // Set up location dropdown
+  const locationSelect = document.getElementById('location');
   
   // Set up filing status change handler to show/hide partner salary
   const filingStatusSelect = document.getElementById('filingStatus');
@@ -24,38 +30,28 @@ document.addEventListener('DOMContentLoaded', function() {
   const matchMySalaryCheckbox = document.getElementById('matchMySalary');
   const partnerSalaryInputContainer = document.getElementById('partnerSalaryInputContainer');
   
-  function updateLocalTaxOptions() {
-    const selectedState = stateSelect.value;
-    
-    // Clear all existing options
-    while (localTaxSelect.options.length > 0) {
-      localTaxSelect.remove(0);
+  // Function to get location key from state and localTax
+  function getLocationKey(state, localTax) {
+    // Handle backward compatibility for old 'sj' localTax
+    if (state === 'CA' && localTax === 'sj') {
+      localTax = 'sf'; // Map old San Jose option to San Francisco
     }
     
-    // Show/hide local tax container based on state
-    if (selectedState === 'CA' || selectedState === 'NY') {
-      localTaxContainer.style.display = 'block';
-      
-      // Add options for the selected state
-      const options = localTaxOptions[selectedState] || [];
-      options.forEach(option => {
-        const optElement = document.createElement('option');
-        optElement.value = option.value;
-        optElement.textContent = option.label;
-        localTaxSelect.appendChild(optElement);
-      });
-      
-      // Set default city based on state
-      if (selectedState === 'CA' && !taxSettings.localTax) {
-        // Default to San Jose for California
-        localTaxSelect.value = 'sj';
-      } else if (selectedState === 'NY' && !taxSettings.localTax) {
-        // Default to NYC for New York
-        localTaxSelect.value = 'nyc';
+    for (const [key, value] of Object.entries(locationMapping)) {
+      if (value.state === state && value.localTax === localTax) {
+        return key;
       }
-    } else {
-      localTaxContainer.style.display = 'none';
     }
+    
+    // Fallback - try to find by state only
+    for (const [key, value] of Object.entries(locationMapping)) {
+      if (value.state === state) {
+        return key;
+      }
+    }
+    
+    // Final fallback - default to CA-sf
+    return 'CA-sf';
   }
   
   function updatePartnerSalaryVisibility() {
@@ -82,14 +78,16 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Set up event listeners
-  stateSelect.addEventListener('change', updateLocalTaxOptions);
   filingStatusSelect.addEventListener('change', updatePartnerSalaryVisibility);
   matchMySalaryCheckbox.addEventListener('change', updatePartnerSalaryInputVisibility);
   
   // Load saved settings
   chrome.storage.sync.get(['taxSettings', 'columnSettings'], function(result) {
     if (result.taxSettings) {
-      document.getElementById('state').value = result.taxSettings.state;
+      // Set location based on saved state and localTax
+      const locationKey = getLocationKey(result.taxSettings.state, result.taxSettings.localTax || 'none');
+      document.getElementById('location').value = locationKey;
+      
       document.getElementById('filingStatus').value = result.taxSettings.filingStatus;
       
       // Set partner salary if it exists (convert from dollars to thousands for display)
@@ -101,14 +99,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (result.taxSettings.matchMySalary) {
         document.getElementById('matchMySalary').checked = result.taxSettings.matchMySalary;
       }
-      
-      // Set local tax if it exists
-      if (result.taxSettings.localTax) {
-        // First update the options
-        updateLocalTaxOptions();
-        // Then set the value
-        document.getElementById('localTax').value = result.taxSettings.localTax;
-      }
+    } else {
+      // No saved settings - set defaults for new users
+      document.getElementById('location').value = 'CA-sf';
+      document.getElementById('filingStatus').value = 'Single';
     }
     
     if (result.columnSettings) {
@@ -118,8 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('addNewColumn').checked = false;
     }
     
-    // Initialize visibility and options based on current selections
-    updateLocalTaxOptions();
+    // Initialize visibility based on current selections
     updatePartnerSalaryVisibility();
     updatePartnerSalaryInputVisibility();
   });
@@ -141,10 +134,13 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Save settings when button is clicked
   document.getElementById('saveButton').addEventListener('click', function() {
-    const state = document.getElementById('state').value;
+    const selectedLocation = document.getElementById('location').value;
+    const locationData = locationMapping[selectedLocation];
+    const state = locationData.state;
+    const localTax = locationData.localTax;
+    
     const filingStatus = document.getElementById('filingStatus').value;
     const addNewColumn = document.getElementById('addNewColumn').checked;
-    const localTax = document.getElementById('localTax').value;
     const partnerSalary = document.getElementById('partnerSalary').value;
     const matchMySalary = document.getElementById('matchMySalary').checked;
     

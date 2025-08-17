@@ -4,7 +4,7 @@
 let taxSettings = {
   state: 'CA',
   filingStatus: 'Single',
-  localTax: 'sj', // Default to San Jose for California
+  localTax: 'sf', // Default to San Francisco for California
   partnerSalary: 0, // Default partner salary for joint filing
   matchMySalary: false // Default to not matching user's salary
 };
@@ -273,9 +273,81 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
     brackets = [
       { threshold: 0, rate: 0.0539 }
     ];
-  } else if (state === 'TX' || state === 'WA') {
-    // Texas and Washington have no state income tax
+  } else if (state === 'TX' || state === 'WA' || state === 'NV' || state === 'FL') {
+    // Texas, Washington, Nevada, and Florida have no state income tax
     return 0;
+  } else if (state === 'NC') {
+    // North Carolina has a flat tax rate
+    standardDeduction = filingStatus === 'Married Filing Jointly' ? 25500 : 12750;
+    brackets = [
+      { threshold: 0, rate: 0.045 }
+    ];
+  } else if (state === 'IL') {
+    // Illinois has a flat tax rate
+    standardDeduction = 0; // Illinois uses exemptions instead of standard deduction
+    brackets = [
+      { threshold: 0, rate: 0.0495 }
+    ];
+  } else if (state === 'DC') {
+    // Washington DC tax brackets (same for all filing statuses)
+    standardDeduction = filingStatus === 'Married Filing Jointly' ? 25900 : 
+                       filingStatus === 'Head of Household' ? 19400 : 12950;
+    brackets = [
+      { threshold: 0, rate: 0.04 },
+      { threshold: 10000, rate: 0.06 },
+      { threshold: 40000, rate: 0.065 },
+      { threshold: 60000, rate: 0.085 },
+      { threshold: 250000, rate: 0.0925 },
+      { threshold: 500000, rate: 0.0975 },
+      { threshold: 1000000, rate: 0.1075 }
+    ];
+  } else if (state === 'CO') {
+    // Colorado has a flat tax rate
+    standardDeduction = filingStatus === 'Married Filing Jointly' ? 27700 : 13850;
+    brackets = [
+      { threshold: 0, rate: 0.044 }
+    ];
+  } else if (state === 'OR') {
+    // Oregon tax brackets
+    if (filingStatus === 'Single') {
+      standardDeduction = 2800;
+      brackets = [
+        { threshold: 0, rate: 0.0475 },
+        { threshold: 4300, rate: 0.0675 },
+        { threshold: 10750, rate: 0.0875 },
+        { threshold: 125000, rate: 0.099 }
+      ];
+    } else if (filingStatus === 'Married Filing Jointly') {
+      standardDeduction = 5600;
+      brackets = [
+        { threshold: 0, rate: 0.0475 },
+        { threshold: 8600, rate: 0.0675 },
+        { threshold: 21500, rate: 0.0875 },
+        { threshold: 250000, rate: 0.099 }
+      ];
+    } else if (filingStatus === 'Married Filing Separately') {
+      standardDeduction = 2800;
+      brackets = [
+        { threshold: 0, rate: 0.0475 },
+        { threshold: 4300, rate: 0.0675 },
+        { threshold: 10750, rate: 0.0875 },
+        { threshold: 125000, rate: 0.099 }
+      ];
+    } else { // Head of Household
+      standardDeduction = 4200;
+      brackets = [
+        { threshold: 0, rate: 0.0475 },
+        { threshold: 8600, rate: 0.0675 },
+        { threshold: 21500, rate: 0.0875 },
+        { threshold: 250000, rate: 0.099 }
+      ];
+    }
+  } else if (state === 'PA') {
+    // Pennsylvania has a flat tax rate
+    standardDeduction = 0; // Pennsylvania doesn't have a standard deduction
+    brackets = [
+      { threshold: 0, rate: 0.0307 }
+    ];
   }
   
   // For joint filing, calculate tax on combined income, then allocate proportionally
@@ -475,7 +547,7 @@ function calculateTotalTax(salary, location = null) {
   }
   
   // For other supported states, just use federal + state + FICA
-  const supportedStates = ['TX', 'WA', 'VA', 'MA', 'GA'];
+  const supportedStates = ['TX', 'WA', 'VA', 'MA', 'GA', 'NC', 'IL', 'FL', 'DC', 'CO', 'OR', 'PA', 'NV'];
   if (supportedStates.includes(location.state)) {
     return federalTax + stateTax + ficaTax;
   }
