@@ -811,7 +811,19 @@ function updateDetailedTableValues(table) {
     const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
                             taxSettings.filingStatus === 'Head of Household' ? 'Head' :
                             taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
-    subTextElement.textContent = `(By location, ${filingStatusAbbr})`;
+    
+    // Create enhanced label with partner salary info
+    let detailedLabel = `By location, ${filingStatusAbbr}`;
+    if (taxSettings.filingStatus === 'Married Filing Jointly') {
+      if (taxSettings.matchMySalary) {
+        detailedLabel += ' +Partner';
+      } else if (taxSettings.partnerSalary > 0) {
+        const partnerSalaryK = Math.round(taxSettings.partnerSalary / 1000);
+        detailedLabel += ` +${partnerSalaryK}K`;
+      }
+    }
+    
+    subTextElement.textContent = `(${detailedLabel})`;
   }
   
   // Update all rows in the detailed table
@@ -1397,12 +1409,23 @@ function addAfterTaxDetailedColumn() {
       const subText = document.createElement('span');
       subText.className = 'MuiTypography-root MuiTypography-caption css-12nofzu';
       
-      // Create filing status abbreviation
+      // Create filing status abbreviation with partner salary info
       const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
                               taxSettings.filingStatus === 'Head of Household' ? 'Head' :
                               taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
       
-      subText.textContent = `(By location, ${filingStatusAbbr})`;
+      // Create enhanced label with partner salary info
+      let detailedLabel = `By location, ${filingStatusAbbr}`;
+      if (taxSettings.filingStatus === 'Married Filing Jointly') {
+        if (taxSettings.matchMySalary) {
+          detailedLabel += ' +Partner';
+        } else if (taxSettings.partnerSalary > 0) {
+          const partnerSalaryK = Math.round(taxSettings.partnerSalary / 1000);
+          detailedLabel += ` +${partnerSalaryK}K`;
+        }
+      }
+      
+      subText.textContent = `(${detailedLabel})`;
       headerDiv.appendChild(subText);
       
       sortLabel.appendChild(headerDiv);
