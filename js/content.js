@@ -78,7 +78,7 @@ function calculateFederalTax(salary, filingStatus, partnerSalary = 0) {
       { threshold: 250525, rate: 0.35 },
       { threshold: 626350, rate: 0.37 }
     ];
-  } else if (filingStatus === 'Married Filing Jointly') {
+  } else { // Married Filing Jointly
     brackets = [
       { threshold: 0, rate: 0.10 },
       { threshold: 23850, rate: 0.12 },
@@ -88,36 +88,12 @@ function calculateFederalTax(salary, filingStatus, partnerSalary = 0) {
       { threshold: 501050, rate: 0.35 },
       { threshold: 751600, rate: 0.37 }
     ];
-  } else if (filingStatus === 'Married Filing Separately') {
-    brackets = [
-      { threshold: 0, rate: 0.10 },
-      { threshold: 11601, rate: 0.12 },
-      { threshold: 47151, rate: 0.22 },
-      { threshold: 100526, rate: 0.24 },
-      { threshold: 191951, rate: 0.32 },
-      { threshold: 243726, rate: 0.35 },
-      { threshold: 365601, rate: 0.37 }
-    ];
-  } else { // Head of Household
-    brackets = [
-      { threshold: 0, rate: 0.10 },
-      { threshold: 16551, rate: 0.12 },
-      { threshold: 63101, rate: 0.22 },
-      { threshold: 100501, rate: 0.24 },
-      { threshold: 191951, rate: 0.32 },
-      { threshold: 243701, rate: 0.35 },
-      { threshold: 609351, rate: 0.37 }
-    ];
   }
   
   // Standard deduction based on filing status
   let standardDeduction;
   if (filingStatus === 'Married Filing Jointly') {
     standardDeduction = 30000;
-  } else if (filingStatus === 'Married Filing Separately') {
-    standardDeduction = 15000;
-  } else if (filingStatus === 'Head of Household') {
-    standardDeduction = 22500;
   } else { // Single
     standardDeduction = 15000;
   }
@@ -165,7 +141,7 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
   // Define brackets based on state and filing status
   if (state === 'CA') {
     // California tax brackets
-    if (filingStatus === 'Single' || filingStatus === 'Married Filing Separately') {
+    if (filingStatus === 'Single') {
       standardDeduction = 5540;
       brackets = [
         { threshold: 0, rate: 0.01 },
@@ -178,7 +154,7 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
         { threshold: 432787, rate: 0.113 },
         { threshold: 721314, rate: 0.123 }
       ];
-    } else if (filingStatus === 'Married Filing Jointly') {
+    } else { // Married Filing Jointly
       standardDeduction = 11080;
       brackets = [
         { threshold: 0, rate: 0.01 },
@@ -190,19 +166,6 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
         { threshold: 721318, rate: 0.103 },
         { threshold: 865574, rate: 0.113 },
         { threshold: 1442628, rate: 0.123 }
-      ];
-    } else { // Head of Household
-      standardDeduction = 11080;
-      brackets = [
-        { threshold: 0, rate: 0.01 },
-        { threshold: 21527, rate: 0.02 },
-        { threshold: 51000, rate: 0.04 },
-        { threshold: 65744, rate: 0.06 },
-        { threshold: 81364, rate: 0.08 },
-        { threshold: 96107, rate: 0.093 },
-        { threshold: 490493, rate: 0.103 },
-        { threshold: 588593, rate: 0.113 },
-        { threshold: 980987, rate: 0.123 }
       ];
     }
   } else if (state === 'NY') {
@@ -220,7 +183,7 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
         { threshold: 5000000, rate: 0.1030 },
         { threshold: 25000000, rate: 0.1090 }
       ];
-    } else if (filingStatus === 'Married Filing Jointly') {
+    } else { // Married Filing Jointly
       standardDeduction = 16050;
       brackets = [
         { threshold: 0, rate: 0.04 },
@@ -230,32 +193,6 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
         { threshold: 161550, rate: 0.06 },
         { threshold: 323200, rate: 0.0685 },
         { threshold: 2155350, rate: 0.0965 },
-        { threshold: 5000000, rate: 0.1030 },
-        { threshold: 25000000, rate: 0.1090 }
-      ];
-    } else if (filingStatus === 'Married Filing Separately') {
-      standardDeduction = 8000;
-      brackets = [
-        { threshold: 0, rate: 0.04 },
-        { threshold: 8500, rate: 0.045 },
-        { threshold: 11700, rate: 0.0525 },
-        { threshold: 13900, rate: 0.055 },
-        { threshold: 80650, rate: 0.06 },
-        { threshold: 215400, rate: 0.0685 },
-        { threshold: 1077550, rate: 0.0965 },
-        { threshold: 5000000, rate: 0.1030 },
-        { threshold: 25000000, rate: 0.1090 }
-      ];
-    } else { // Head of Household
-      standardDeduction = 11200;
-      brackets = [
-        { threshold: 0, rate: 0.04 },
-        { threshold: 12800, rate: 0.045 },
-        { threshold: 17650, rate: 0.0525 },
-        { threshold: 20900, rate: 0.055 },
-        { threshold: 107650, rate: 0.06 },
-        { threshold: 269300, rate: 0.0685 },
-        { threshold: 1616450, rate: 0.0965 },
         { threshold: 5000000, rate: 0.1030 },
         { threshold: 25000000, rate: 0.1090 }
       ];
@@ -272,12 +209,10 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
   } else if (state === 'MA') {
     // Massachusetts has a 5% tax rate up to $1M, then 9% (5% + 4% surtax) above $1M
     // MA uses personal exemptions instead of standard deduction
-    if (filingStatus === 'Single' || filingStatus === 'Married Filing Separately') {
+    if (filingStatus === 'Single') {
       standardDeduction = 4400; // Personal exemption
-    } else if (filingStatus === 'Married Filing Jointly') {
+    } else { // Married Filing Jointly
       standardDeduction = 8800; // Personal exemption
-    } else { // Head of Household
-      standardDeduction = 6800; // Personal exemption
     }
     brackets = [
       { threshold: 0, rate: 0.05 },
@@ -310,8 +245,7 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
     ];
   } else if (state === 'DC') {
     // Washington DC tax brackets (same for all filing statuses)
-    standardDeduction = filingStatus === 'Married Filing Jointly' ? 25900 : 
-                       filingStatus === 'Head of Household' ? 19400 : 12950;
+    standardDeduction = filingStatus === 'Married Filing Jointly' ? 25900 : 12950;
     brackets = [
       { threshold: 0, rate: 0.04 },
       { threshold: 10000, rate: 0.06 },
@@ -337,24 +271,8 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
         { threshold: 10750, rate: 0.0875 },
         { threshold: 125000, rate: 0.099 }
       ];
-    } else if (filingStatus === 'Married Filing Jointly') {
+    } else { // Married Filing Jointly
       standardDeduction = 5600;
-      brackets = [
-        { threshold: 0, rate: 0.0475 },
-        { threshold: 8600, rate: 0.0675 },
-        { threshold: 21500, rate: 0.0875 },
-        { threshold: 250000, rate: 0.099 }
-      ];
-    } else if (filingStatus === 'Married Filing Separately') {
-      standardDeduction = 2800;
-      brackets = [
-        { threshold: 0, rate: 0.0475 },
-        { threshold: 4300, rate: 0.0675 },
-        { threshold: 10750, rate: 0.0875 },
-        { threshold: 125000, rate: 0.099 }
-      ];
-    } else { // Head of Household
-      standardDeduction = 4200;
       brackets = [
         { threshold: 0, rate: 0.0475 },
         { threshold: 8600, rate: 0.0675 },
@@ -430,7 +348,7 @@ function calculateLocalTax(salary, state, localTax, filingStatus) {
       let localTaxAmount = 0;
       let taxableIncome = salary;
       
-      if (filingStatus === 'Single' || filingStatus === 'Married Filing Separately') {
+      if (filingStatus === 'Single') {
         if (taxableIncome <= 12000) {
           localTaxAmount = taxableIncome * 0.03078;
         } else if (taxableIncome <= 25000) {
@@ -440,7 +358,7 @@ function calculateLocalTax(salary, state, localTax, filingStatus) {
         } else {
           localTaxAmount = 1813 + ((taxableIncome - 500000) * 0.03876);
         }
-      } else if (filingStatus === 'Married Filing Jointly') {
+      } else { // Married Filing Jointly
         if (taxableIncome <= 21600) {
           localTaxAmount = taxableIncome * 0.03078;
         } else if (taxableIncome <= 45000) {
@@ -448,17 +366,7 @@ function calculateLocalTax(salary, state, localTax, filingStatus) {
         } else if (taxableIncome <= 90000) {
           localTaxAmount = 1545 + ((taxableIncome - 45000) * 0.03819) - 17000;
         } else {
-          localTaxAmount = 3264 + ((taxableIncome - 90000) * 0.03876) - 17000;
-        }
-      } else { // Head of Household
-        if (taxableIncome <= 14400) {
-          localTaxAmount = taxableIncome * 0.03078;
-        } else if (taxableIncome <= 30000) {
-          localTaxAmount = 443 + ((taxableIncome - 14400) * 0.03762);
-        } else if (taxableIncome <= 60000) {
-          localTaxAmount = 1030 + ((taxableIncome - 30000) * 0.03819);
-        } else {
-          localTaxAmount = 2176 + ((taxableIncome - 60000) * 0.03876);
+          localTaxAmount = 3264 + ((taxableIncome - 90000) * 0.03876);
         }
       }
       
@@ -718,9 +626,7 @@ function addAfterTaxColumn() {
       headerTitle.textContent = 'After Tax ';
       
       const stateAbbr = taxSettings.state;
-      const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                              taxSettings.filingStatus === 'Head of Household' ? 'Head' :
-                              taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+      const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
       
       const infoSpan = document.createElement('span');
       infoSpan.className = 'MuiTypography-root MuiTypography-caption job-family_secondary__YtLA8 css-b4wlzm';
@@ -908,9 +814,7 @@ function updateDetailedTableValues(table) {
   // Update the header text with current filing status
   const subTextElement = afterTaxHeader.querySelector('.css-12nofzu');
   if (subTextElement) {
-    const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                            taxSettings.filingStatus === 'Head of Household' ? 'Head' :
-                            taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+    const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
     
     // Create enhanced label with partner salary info
     let detailedLabel = `By location, ${filingStatusAbbr}`;
@@ -981,9 +885,7 @@ function updateNormalTableValues(table) {
   // Update the state and filing status in the header
   const afterTaxHeader = headerCells[afterTaxColumnIndex];
   const stateAbbr = taxSettings.state;
-  const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                         taxSettings.filingStatus === 'Head of Household' ? 'Head' :
-                         taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+  const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
   
   // Find or create the info span
   let infoSpan = afterTaxHeader.querySelector('span');
@@ -1053,9 +955,7 @@ function updateTableValues(table) {
   // Update the state and filing status in the header
   const afterTaxHeader = headerCells[afterTaxColumnIndex];
   const stateAbbr = taxSettings.state;
-  const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                         taxSettings.filingStatus === 'Head of Household' ? 'Head' :
-                         taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+  const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
   
   // Find or create the info span
   let infoSpan = afterTaxHeader.querySelector('span');
@@ -1399,9 +1299,7 @@ function duplicateCompensationElements() {
         // Function to update label text with current settings
         const updateLabelText = () => {
             const stateAbbr = taxSettings.state;
-            const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                                   taxSettings.filingStatus === 'Head of Household' ? 'Head' :
-                         taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+            const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
             labelClone.textContent = `After Tax ${formatAfterTaxLabel(stateAbbr, filingStatusAbbr)}`;
         };
 
@@ -1525,9 +1423,7 @@ function addAfterTaxDetailedColumn() {
       subText.className = 'MuiTypography-root MuiTypography-caption css-12nofzu';
       
       // Create filing status abbreviation with partner salary info
-      const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                              taxSettings.filingStatus === 'Head of Household' ? 'Head' :
-                              taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+      const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
       
       // Create enhanced label with partner salary info
       let detailedLabel = `By location, ${filingStatusAbbr}`;
@@ -1656,9 +1552,7 @@ function duplicateMedianElements() {
         
         // Update label text based on whether we have location info
         const stateAbbr = taxSettings.state;
-        const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                                   taxSettings.filingStatus === 'Head of Household' ? 'Head' :
-                         taxSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+        const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
         if (location) {
           // labelClone.textContent = `After Tax (${filingStatusAbbr})`;
           labelClone.textContent = `After Tax ${formatAfterTaxLabelLocationSpecific(filingStatusAbbr, true)}`;
@@ -1687,9 +1581,7 @@ function duplicateMedianElements() {
                 
                 // Update label
                 const stateAbbr = newSettings.state;
-                const filingStatusAbbr = newSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 
-                                           newSettings.filingStatus === 'Head of Household' ? 'Head' :
-                                           newSettings.filingStatus === 'Married Filing Separately' ? 'Separate' : 'Single';
+                const filingStatusAbbr = newSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
                 if (newLocation) {
                   labelClone.textContent = `After Tax ${formatAfterTaxLabelLocationSpecific(filingStatusAbbr, true)}`;
                 } else {
