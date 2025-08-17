@@ -613,7 +613,15 @@ function getLocationFromURL() {
         'greater-austin-area': { state: 'TX', city: 'Austin' },
         'atlanta-area': { state: 'GA', city: 'Atlanta' },
         'northern-virginia-washington-dc': { state: 'VA', city: 'Arlington' },
-        'greater-boston-area': { state: 'MA', city: 'Boston' }
+        'greater-boston-area': { state: 'MA', city: 'Boston' },
+        'greater-chicago-area': { state: 'IL', city: 'Chicago' },
+        'raleigh-durham-area': { state: 'NC', city: 'Raleigh' },
+        'miami-ft-lauderdale-area': { state: 'FL', city: 'Miami' },
+        'greater-denver-and-boulder-area': { state: 'CO', city: 'Denver' },
+        'greater-portland-area': { state: 'OR', city: 'Portland' },
+        'pittsburgh-area': { state: 'PA', city: 'Pittsburgh' },
+        'philadelphia-area': { state: 'PA', city: 'Philadelphia' },
+        'las-vegas-area': { state: 'NV', city: 'Las Vegas' }
     };
     
     for (const [urlPath, location] of Object.entries(mapping)) {
@@ -1136,10 +1144,25 @@ const observer = new MutationObserver(function(mutations) {
             }
           }
           if (document.querySelector('[class*="percentiles_medianAmount"]')) {
-            duplicateMedianElements();
-            duplicatePercentileElements();
-            duplicate75thPercentileElements();
-            duplicate90thPercentileElements();
+            // Only skip duplication if we're on an unsupported location page
+            const path = window.location.pathname;
+            if (path.includes('/locations/')) {
+              const location = getLocationFromURL();
+              if (location) {
+                // Supported location page - duplicate elements
+                duplicateMedianElements();
+                duplicatePercentileElements();
+                duplicate75thPercentileElements();
+                duplicate90thPercentileElements();
+              }
+              // If unsupported location page, skip duplication
+            } else {
+              // Non-location page - always duplicate elements
+              duplicateMedianElements();
+              duplicatePercentileElements();
+              duplicate75thPercentileElements();
+              duplicate90thPercentileElements();
+            }
           }
         } catch (error) {
           console.error('Taxes.fyi: Update error:', error);
@@ -1588,6 +1611,13 @@ detailedTableObserver.observe(document.body, {
 
 // Function to duplicate median elements and show after-tax values
 function duplicateMedianElements() {
+    // Only skip duplication if we're on an unsupported location page
+    const path = window.location.pathname;
+    if (path.includes('/locations/')) {
+        const location = getLocationFromURL();
+        if (!location) return; // Skip only for unsupported location pages
+    }
+
     // Check if already added
     const existingAfterTaxMedian = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
         .find(el => el.textContent.includes('After Tax'));
@@ -1659,6 +1689,13 @@ function duplicateMedianElements() {
 
 // Function to duplicate percentile elements with the same pattern
 function duplicatePercentileElements() {
+    // Only skip duplication if we're on an unsupported location page
+    const path = window.location.pathname;
+    if (path.includes('/locations/')) {
+        const location = getLocationFromURL();
+        if (!location) return; // Skip only for unsupported location pages
+    }
+
     // Check if already added
     const existingAfterTaxPercentile = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
         .find(el => el.textContent.includes('After Tax 25th%'));
@@ -1720,6 +1757,13 @@ function duplicatePercentileElements() {
 
 // Update 75th and 90th percentile functions similarly
 function duplicate75thPercentileElements() {
+    // Only skip duplication if we're on an unsupported location page
+    const path = window.location.pathname;
+    if (path.includes('/locations/')) {
+        const location = getLocationFromURL();
+        if (!location) return; // Skip only for unsupported location pages
+    }
+
     const existingAfterTax75thPercentile = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
         .find(el => el.textContent.includes('After Tax 75th%'));
     if (existingAfterTax75thPercentile) return;
@@ -1778,6 +1822,13 @@ function duplicate75thPercentileElements() {
 }
 
 function duplicate90thPercentileElements() {
+    // Only skip duplication if we're on an unsupported location page
+    const path = window.location.pathname;
+    if (path.includes('/locations/')) {
+        const location = getLocationFromURL();
+        if (!location) return; // Skip only for unsupported location pages
+    }
+
     const existingAfterTax90thPercentile = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
         .find(el => el.textContent.includes('After Tax 90th%'));
     if (existingAfterTax90thPercentile) return;
@@ -1839,6 +1890,13 @@ function duplicate90thPercentileElements() {
 const medianObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
         if (mutation.type === 'childList') {
+            // Only skip if we're on an unsupported location page
+            const path = window.location.pathname;
+            if (path.includes('/locations/')) {
+                const location = getLocationFromURL();
+                if (!location) return; // Skip only for unsupported location pages
+            }
+
             const medianAmount = document.querySelector('[class*="percentiles_medianAmount"]');
             const medianLabel = document.querySelector('[class*="percentiles_percentileLabel"]');
             
