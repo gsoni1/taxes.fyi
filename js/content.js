@@ -207,44 +207,57 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
     }
   } else if (state === 'NY') {
     // New York tax brackets
-    if (filingStatus === 'Single' || filingStatus === 'Married Filing Separately') {
+    if (filingStatus === 'Single') {
       standardDeduction = 8000;
       brackets = [
         { threshold: 0, rate: 0.04 },
-        { threshold: 8501, rate: 0.045 },
-        { threshold: 11701, rate: 0.0525 },
-        { threshold: 13901, rate: 0.055 },
-        { threshold: 80651, rate: 0.06 },
-        { threshold: 215401, rate: 0.0685 },
-        { threshold: 1077551, rate: 0.0965 },
-        { threshold: 5000001, rate: 0.1030 },
-        { threshold: 25000001, rate: 0.1090 }
+        { threshold: 8500, rate: 0.045 },
+        { threshold: 11700, rate: 0.0525 },
+        { threshold: 13900, rate: 0.055 },
+        { threshold: 80650, rate: 0.06 },
+        { threshold: 215400, rate: 0.0685 },
+        { threshold: 1077550, rate: 0.0965 },
+        { threshold: 5000000, rate: 0.1030 },
+        { threshold: 25000000, rate: 0.1090 }
       ];
     } else if (filingStatus === 'Married Filing Jointly') {
       standardDeduction = 16050;
       brackets = [
         { threshold: 0, rate: 0.04 },
-        { threshold: 17151, rate: 0.045 },
-        { threshold: 23601, rate: 0.0525 },
-        { threshold: 27901, rate: 0.055 },
-        { threshold: 161551, rate: 0.06 },
-        { threshold: 323201, rate: 0.0685 },
-        { threshold: 2155351, rate: 0.0965 },
-        { threshold: 5000001, rate: 0.1030 },
-        { threshold: 25000001, rate: 0.1090 }
+        { threshold: 17150, rate: 0.045 },
+        { threshold: 23600, rate: 0.0525 },
+        { threshold: 27900, rate: 0.055 },
+        { threshold: 161550, rate: 0.06 },
+        { threshold: 323200, rate: 0.0685 },
+        { threshold: 2155350, rate: 0.0965 },
+        { threshold: 5000000, rate: 0.1030 },
+        { threshold: 25000000, rate: 0.1090 }
+      ];
+    } else if (filingStatus === 'Married Filing Separately') {
+      standardDeduction = 8000;
+      brackets = [
+        { threshold: 0, rate: 0.04 },
+        { threshold: 8500, rate: 0.045 },
+        { threshold: 11700, rate: 0.0525 },
+        { threshold: 13900, rate: 0.055 },
+        { threshold: 80650, rate: 0.06 },
+        { threshold: 215400, rate: 0.0685 },
+        { threshold: 1077550, rate: 0.0965 },
+        { threshold: 5000000, rate: 0.1030 },
+        { threshold: 25000000, rate: 0.1090 }
       ];
     } else { // Head of Household
       standardDeduction = 11200;
       brackets = [
         { threshold: 0, rate: 0.04 },
-        { threshold: 12801, rate: 0.045 },
-        { threshold: 17651, rate: 0.0525 },
-        { threshold: 20901, rate: 0.055 },
-        { threshold: 107651, rate: 0.06 },
-        { threshold: 269301, rate: 0.0685 },
-        { threshold: 1616451, rate: 0.0965 },
-        { threshold: 5000001, rate: 0.1030 },
-        { threshold: 25000001, rate: 0.1090 }
+        { threshold: 12800, rate: 0.045 },
+        { threshold: 17650, rate: 0.0525 },
+        { threshold: 20900, rate: 0.055 },
+        { threshold: 107650, rate: 0.06 },
+        { threshold: 269300, rate: 0.0685 },
+        { threshold: 1616450, rate: 0.0965 },
+        { threshold: 5000000, rate: 0.1030 },
+        { threshold: 25000000, rate: 0.1090 }
       ];
     }
   } else if (state === 'VA') {
@@ -257,11 +270,18 @@ function calculateStateTax(salary, state, filingStatus, partnerSalary = 0) {
       { threshold: 17000, rate: 0.0575 }
     ];
   } else if (state === 'MA') {
-    // Massachusetts has a flat tax rate of 5% for all income
-    standardDeduction = 0; // MA uses different types of deductions, simplified here
+    // Massachusetts has a 5% tax rate up to $1M, then 9% (5% + 4% surtax) above $1M
+    // MA uses personal exemptions instead of standard deduction
+    if (filingStatus === 'Single' || filingStatus === 'Married Filing Separately') {
+      standardDeduction = 4400; // Personal exemption
+    } else if (filingStatus === 'Married Filing Jointly') {
+      standardDeduction = 8800; // Personal exemption
+    } else { // Head of Household
+      standardDeduction = 6800; // Personal exemption
+    }
     brackets = [
-      { threshold: 8000, rate: 0.05 },
-      { threshold: 1083150, rate: 0.09 }
+      { threshold: 0, rate: 0.05 },
+      { threshold: 1000000, rate: 0.09 }
     ];
   } else if (state === 'GA') {
     // Georgia tax brackets (same for all filing statuses)
