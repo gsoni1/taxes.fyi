@@ -84,27 +84,34 @@ https://github.com/user-attachments/assets/15b8cd31-4a8d-4a63-b786-33ead870931f
 ### Features Before and After:
 #### Average Compensation Table
 Before:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 53 07 AM" src="https://github.com/user-attachments/assets/07665ddd-798d-490a-a943-5e077f8a646e" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 28 49 AM" src="https://github.com/user-attachments/assets/a6e8c1d6-489a-4056-880f-964b67c9f21f" />
 After:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 55 43 AM" src="https://github.com/user-attachments/assets/18b49a3b-3384-45ec-90a9-329949ad7965" />
-<img width="1122" alt="Screenshot 2025-04-10 at 5 47 49 AM" src="https://github.com/user-attachments/assets/617a5e77-7639-48fc-8344-8bea13a6606c" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 29 13 AM" src="https://github.com/user-attachments/assets/5dc2c29d-00ba-4a3c-a2a0-c27fcc57a07f" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 29 34 AM" src="https://github.com/user-attachments/assets/bf381af6-9c99-435f-9345-6dcba769feff" />
+
 #### Latest Salary Submissions Table
 Before:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 53 32 AM" src="https://github.com/user-attachments/assets/059af910-b544-45b7-a1fc-b5fbc44eb78e" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 30 07 AM" src="https://github.com/user-attachments/assets/6fbc6201-4025-456e-8bb4-86e819bfee08" />
 After:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 55 29 AM" src="https://github.com/user-attachments/assets/136ce63c-e3c5-4136-9705-d1e2d3939687" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 29 51 AM" src="https://github.com/user-attachments/assets/afb7d5ca-7678-4d55-8b32-7873bdfd1507" />
+
 #### Level-Specific Compensation 
 Before:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 53 47 AM" src="https://github.com/user-attachments/assets/18c3d908-1ad2-4502-ba1d-5b174c22705b" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 31 00 AM" src="https://github.com/user-attachments/assets/4e2655eb-c386-4c29-96fc-836066a45350" />
+
 After:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 55 14 AM" src="https://github.com/user-attachments/assets/cb47ece3-1f98-496b-9020-77baad3b5af0" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 31 13 AM" src="https://github.com/user-attachments/assets/e6dd2635-2ae2-4c2c-aff6-aa44894e22df" />
+
 #### Salary by Title
 Before:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 54 21 AM" src="https://github.com/user-attachments/assets/55307c8f-de6c-4c0e-ada9-264726a31b2c" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 31 43 AM" src="https://github.com/user-attachments/assets/a7288a75-3261-4e9c-8565-7d3667797dbf" />
+
 After:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 54 56 AM" src="https://github.com/user-attachments/assets/74a5cb5d-e302-4a97-88c1-79cf77ad5605" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 31 50 AM" src="https://github.com/user-attachments/assets/5b2c2eb2-26e0-4564-9b4c-3b5c1f62ee97" />
+
 #### Salary by Title and Location
 Before:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 54 36 AM" src="https://github.com/user-attachments/assets/1e1752a0-9491-4bfb-b01b-1e7ccd3fdf7a" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 32 15 AM" src="https://github.com/user-attachments/assets/79c72cd8-4a37-46e0-ad0a-5f6dc6a59f71" />
+
 After:
-<img width="1689" alt="Screenshot 2025-04-10 at 2 54 44 AM" src="https://github.com/user-attachments/assets/861af896-076c-45e8-8e02-3c80477f6f3f" />
+<img width="1825" height="1176" alt="Screenshot 2025-08-18 at 1 32 08 AM" src="https://github.com/user-attachments/assets/256b6f95-247e-4709-ad30-c98f3f50a3ad" />
