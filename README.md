@@ -12,15 +12,33 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 **Adds after tax salary column for:**
 - Average compensation salary tables
 - Latest salary submissions tables
-  - Each after-tax figure is calculated by the location of that salary submission
+  - Each after-tax figure is calculated by the location of that salary submission and the filing status selected in the settings
 
 **\+ Adds after tax figures for:**
 - Level-specific compensation breakdown
 - Salary by title & location (after tax median, 25th%, 75th%, and 90th% percentiles)
 
-**Extension settings:**
-- Add multiple columns for multiple states and/or filing statuses 
-- Choose between states (NY, CA, WA, TX, MA, VA, GA) and filing statuses (Single, Joint, Separately, Head) to be used in tax calculations
+**Extension features:**
+- Add multiple columns for multiple states and/or filing statuses
+- 18 supported locations across the US:
+  - San Francisco/LA/San Jose, CA
+  - New York City, NY
+  - Seattle, WA
+  - Chicago, IL
+  - Atlanta, GA
+  - Raleigh, NC
+  - Austin/Dallas, TX
+  - Arlington/Northern Virginia, VA
+  - Washington DC
+  - Boston, MA
+  - Miami, FL
+  - Denver/Boulder, CO
+  - Portland, OR
+  - Pittsburgh/Philadelphia, PA
+  - Las Vegas, NV
+- 2 filing statuses: Single/Married Filing Separately, Married Filing Jointly
+- Comprehensive tax calculations: Includes federal income tax, state income tax, FICA taxes, and local taxes (NYC, San Francisco) with accurate 2024/25 tax brackets
+- Location-aware calculations: Automatically detects location pages and applies correct state, local, and federal tax rates
 
 ## Product Requirements Document
 [See the Google Doc](https://docs.google.com/document/d/1qntL5deMUZpRBSYonCrBoEyvlGp8EsMPdVpmuNbUoqU/edit?usp=sharing) 
