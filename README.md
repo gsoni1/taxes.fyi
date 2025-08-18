@@ -26,16 +26,7 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
   - Seattle, WA
   - Chicago, IL
   - Atlanta, GA
-  - Raleigh, NC
-  - Austin/Dallas, TX
-  - Arlington/Northern Virginia, VA
-  - Washington DC
-  - Boston, MA
-  - Miami, FL
-  - Denver/Boulder, CO
-  - Portland, OR
-  - Pittsburgh/Philadelphia, PA
-  - Las Vegas, NV
+  - AND more!
 - 2 filing statuses: Single/Married Filing Separately, Married Filing Jointly
 - Comprehensive tax calculations: Includes federal income tax, state income tax, FICA taxes, and local taxes (NYC, San Francisco) with accurate 2024/25 tax brackets
 - Location-aware calculations: Automatically detects location pages and applies correct state, local, and federal tax rates
