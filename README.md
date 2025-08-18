@@ -25,23 +25,6 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 ## Product Requirements Document
 [See the Google Doc](https://docs.google.com/document/d/1qntL5deMUZpRBSYonCrBoEyvlGp8EsMPdVpmuNbUoqU/edit?usp=sharing) 
 
-## Feature Demos
-### Average Compensation Salary Table
-https://github.com/user-attachments/assets/d33eddcb-21ff-4e9d-9600-dbab13d8d6e0
-
-### Latest Salary Submissions Table
-https://github.com/user-attachments/assets/cefb478d-8698-462f-9945-06efabe03645
-
-### Level-Specific Compensation 
-https://github.com/user-attachments/assets/c59309d4-d008-4110-9fd3-db1fbe59acde
-
-### Salary by Title
-https://github.com/user-attachments/assets/8977c4e0-c242-46f2-b88f-9ad617db1691
-
-### Salary by Title and Location
-https://github.com/user-attachments/assets/15b8cd31-4a8d-4a63-b786-33ead870931f
-
-
 ## Feature Screenshots
 ### Average Compensation Salary Table
 <img width="848" height="578" alt="Component 6" src="https://github.com/user-attachments/assets/2f579fee-717f-4665-a7d3-37f551e21494" />
@@ -68,6 +51,22 @@ https://github.com/user-attachments/assets/15b8cd31-4a8d-4a63-b786-33ead870931f
 <img width="325" height="475" alt="custompartnersalary@2x" src="https://github.com/user-attachments/assets/7665c974-4843-422e-afe9-3a081eef4dab" />
 <img width="325" height="409" alt="samepartnersalary" src="https://github.com/user-attachments/assets/7a17017d-5a5b-4a0c-b285-08cd7f886bae" />
 <img width="325" height="528" alt="saveerror@2x" src="https://github.com/user-attachments/assets/1d4b740b-694d-495a-99b5-619081d50ea3" />
+
+## Feature Demos
+### Average Compensation Salary Table
+https://github.com/user-attachments/assets/d33eddcb-21ff-4e9d-9600-dbab13d8d6e0
+
+### Latest Salary Submissions Table
+https://github.com/user-attachments/assets/cefb478d-8698-462f-9945-06efabe03645
+
+### Level-Specific Compensation 
+https://github.com/user-attachments/assets/c59309d4-d008-4110-9fd3-db1fbe59acde
+
+### Salary by Title
+https://github.com/user-attachments/assets/8977c4e0-c242-46f2-b88f-9ad617db1691
+
+### Salary by Title and Location
+https://github.com/user-attachments/assets/15b8cd31-4a8d-4a63-b786-33ead870931f
 
 ## Gallery
 ### All Demos 
