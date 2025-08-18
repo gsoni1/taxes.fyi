@@ -61,7 +61,7 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 <img width="325" height="409" alt="samepartnersalary" src="https://github.com/user-attachments/assets/7a17017d-5a5b-4a0c-b285-08cd7f886bae" />
 <img width="325" height="528" alt="saveerror@2x" src="https://github.com/user-attachments/assets/1d4b740b-694d-495a-99b5-619081d50ea3" />
 
-## Feature Demos
+## Features Demos
 ### Average Compensation Salary Table
 https://github.com/user-attachments/assets/d33eddcb-21ff-4e9d-9600-dbab13d8d6e0
 
