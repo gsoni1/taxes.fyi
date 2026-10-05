@@ -34,6 +34,17 @@ _Stop guessing your take-home pay — see it instantly with taxes.fyi._
 - Comprehensive tax calculations: Includes federal income tax, state income tax, FICA taxes, and local taxes (NYC, San Francisco) with accurate 2024/25 tax brackets
 - Location-aware calculations: Automatically detects location pages and applies correct state, local, and federal tax rates
 
+## Development
+
+The salary-table, percentile-summary, and level-breakdown integrations support
+both legacy and current Levels.fyi CSS Modules class names. Homepage recent-salary
+cards are not supported.
+
+Open `tests/dom-compatibility.html` in Chrome to run the regression tests. The
+harness uses local DOM fixtures and mocked Chrome storage, without installing the
+extension or contacting Levels.fyi. It reports individual results and an overall
+pass/fail status. No build step or dependency installation is required.
+
 ## Product Requirements Document
 [See the Google Doc](https://docs.google.com/document/d/1qntL5deMUZpRBSYonCrBoEyvlGp8EsMPdVpmuNbUoqU/edit?usp=sharing) 
 
