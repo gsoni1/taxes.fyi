@@ -18,6 +18,19 @@ const MAX_RETRIES = 5;
 const INITIAL_DELAY = 2000;
 let retryCount = 0;
 
+function cssModuleSelector(moduleName, localName) {
+  return `:is([class*="${moduleName}_${localName}"], [class*="${moduleName}-module-"][class*="__${localName}"])`;
+}
+
+const pageSelectors = {
+  detailedHeader: `p${cssModuleSelector('salary-table', 'sortTableHeaderText')}`,
+  medianAmount: cssModuleSelector('percentiles', 'medianAmount'),
+  percentileLabel: cssModuleSelector('percentiles', 'percentileLabel'),
+  percentileBar: cssModuleSelector('percentiles', 'percentileBar'),
+  compensationLabel: `dt${cssModuleSelector('level', 'breakdownLabel')}`,
+  compensationValue: `dd${cssModuleSelector('level', 'totalComp')}`
+};
+
 // Load user settings from storage
 chrome.storage.sync.get(['taxSettings', 'columnSettings'], function(result) {
   if (result.taxSettings) {
@@ -53,6 +66,11 @@ chrome.storage.sync.get(['taxSettings', 'columnSettings'], function(result) {
       try {
         addAfterTaxColumn();
         addAfterTaxDetailedColumn();
+        duplicateCompensationElements();
+        duplicateMedianElements();
+        duplicatePercentileElements();
+        duplicate75thPercentileElements();
+        duplicate90thPercentileElements();
       } catch (error) {
         console.error('Taxes.fyi: Initialization error:', error);
       }
@@ -420,7 +438,7 @@ function formatAfterTaxLabelLocationSpecific(filingStatusAbbr, includePartnerSal
 
 // Add new helper function to parse location data
 function parseLocationFromRow(row) {
-  const locationSpan = row.querySelector('.MuiTypography-caption.css-xlmjpr');
+  const locationSpan = row.querySelector('td:first-child .MuiTypography-caption');
   if (!locationSpan) return null;
   
   const locationText = locationSpan.textContent;
@@ -562,17 +580,8 @@ function getLocationFromURL() {
 }
 
 // Main function to add the After Tax column
-function addAfterTaxColumn() {
+function addAfterTaxColumn(addNewColumn = false) {
   console.log('Taxes.fyi: Looking for tables to modify...');
-  
-  // First, check if we already added the column
-  const existingAfterTaxHeaders = Array.from(document.querySelectorAll('th h6')).filter(h => 
-    h.textContent.trim() === 'After Tax ');
-  
-  if (existingAfterTaxHeaders.length > 0) {
-    console.log('Taxes.fyi: After Tax column already exists');
-    return;
-  }
   
   // Find all tables on the page
   const tables = document.querySelectorAll('.MuiTable-root');
@@ -586,6 +595,9 @@ function addAfterTaxColumn() {
         console.log(`Taxes.fyi: No header row found in table ${tableIndex}`);
         return;
       }
+
+      if (!addNewColumn && Array.from(headerRow.querySelectorAll('th h6')).some(h =>
+        h.textContent.trim() === 'After Tax')) return;
       
       // Find the Base column index first
       const headerCells = headerRow.querySelectorAll('th');
@@ -629,7 +641,8 @@ function addAfterTaxColumn() {
       const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
       
       const infoSpan = document.createElement('span');
-      infoSpan.className = 'MuiTypography-root MuiTypography-caption job-family_secondary__YtLA8 css-b4wlzm';
+      infoSpan.className = totalHeaderCell.querySelector('.MuiTypography-caption')?.className ||
+        'MuiTypography-root MuiTypography-caption';
       infoSpan.textContent = formatAfterTaxLabel(stateAbbr, filingStatusAbbr);
       
       newHeaderCell.appendChild(headerTitle);
@@ -729,22 +742,10 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       const shouldAddNewColumn = columnSettings.addNewColumn;
       
       if (shouldAddNewColumn) {
-        // Remove all existing after-tax columns from normal tables
-        const tables = document.querySelectorAll('.MuiTable-root');
-        tables.forEach(table => {
-          const headerRow = table.querySelector('thead tr');
-          if (!headerRow) return;
-          
-          // Skip detailed tables for removal (they handle multiple columns differently)
-          if (headerRow.querySelector('p[class*="salary-table_sortTableHeaderText"]')) return;
-          
-          removeAfterTaxColumn(table);
-        });
-        
         // Add new after-tax columns with updated calculations
         setTimeout(() => {
-          addAfterTaxColumn();
-          addAfterTaxDetailedColumn();
+          addAfterTaxColumn(true);
+          addAfterTaxDetailedColumn(true);
         }, 500);
       } else {
         // Update values in existing after-tax columns
@@ -753,7 +754,7 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
           const headerRow = table.querySelector('thead tr');
           if (!headerRow) return;
           
-          if (headerRow.querySelector('p[class*="salary-table_sortTableHeaderText"]')) {
+          if (headerRow.querySelector(pageSelectors.detailedHeader)) {
             // This is a detailed table - update its after-tax values
             updateDetailedTableValues(table);
           } else {
@@ -772,7 +773,7 @@ function removeAfterTaxColumn(table) {
   if (!headerRow) return;
   
   const afterTaxHeaders = Array.from(headerRow.querySelectorAll('th h6'))
-    .filter(h => h.textContent.trim() === 'After Tax ');
+    .filter(h => h.textContent.trim() === 'After Tax');
   
   afterTaxHeaders.forEach(header => {
     const column = header.closest('th');
@@ -798,13 +799,13 @@ function updateDetailedTableValues(table) {
   
   // Find the "After Tax" column in the detailed table
   const afterTaxHeader = Array.from(headerRow.querySelectorAll('th'))
-    .find(th => th.querySelector('p[class*="salary-table_sortTableHeaderText"]')?.textContent.includes('After Tax'));
+    .find(th => th.querySelector(pageSelectors.detailedHeader)?.textContent.includes('After Tax'));
   
   if (!afterTaxHeader) return; // No after-tax column exists
   
   // Find the "Total Compensation" column
   const totalCompHeader = Array.from(headerRow.querySelectorAll('th'))
-    .find(th => th.querySelector('p[class*="salary-table_sortTableHeaderText"]')?.textContent.includes('Total Compensation'));
+    .find(th => th.querySelector(pageSelectors.detailedHeader)?.textContent.includes('Total Compensation'));
   
   if (!totalCompHeader) return;
   
@@ -812,7 +813,7 @@ function updateDetailedTableValues(table) {
   const totalCompColumnIndex = Array.from(headerRow.children).indexOf(totalCompHeader);
   
   // Update the header text with current filing status
-  const subTextElement = afterTaxHeader.querySelector('.css-12nofzu');
+  const subTextElement = afterTaxHeader.querySelector('.MuiTypography-caption');
   if (subTextElement) {
     const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
     
@@ -891,7 +892,8 @@ function updateNormalTableValues(table) {
   let infoSpan = afterTaxHeader.querySelector('span');
   if (!infoSpan) {
     infoSpan = document.createElement('span');
-    infoSpan.className = 'MuiTypography-root MuiTypography-caption job-family_secondary__YtLA8 css-b4wlzm';
+    infoSpan.className = headerCells[totalColumnIndex].querySelector('.MuiTypography-caption')?.className ||
+      'MuiTypography-root MuiTypography-caption';
     afterTaxHeader.appendChild(infoSpan);
   }
   
@@ -925,10 +927,7 @@ function updateNormalTableValues(table) {
     afterTaxValueElement.textContent = formatSalary(afterTaxSalary);
     
     // Match styling with total column
-    const isTotalBold = totalValueElement.className.includes('css-xj4mea');
-    afterTaxValueElement.className = isTotalBold ? 
-      'MuiTypography-root MuiTypography-subtitle1 css-xj4mea' : 
-      'MuiTypography-root MuiTypography-subtitle1 css-6xe2a5';
+    afterTaxValueElement.className = totalValueElement.className;
   });
 }
 
@@ -961,7 +960,8 @@ function updateTableValues(table) {
   let infoSpan = afterTaxHeader.querySelector('span');
   if (!infoSpan) {
     infoSpan = document.createElement('span');
-    infoSpan.className = 'MuiTypography-root MuiTypography-caption job-family_secondary__YtLA8 css-b4wlzm';
+    infoSpan.className = headerCells[totalColumnIndex].querySelector('.MuiTypography-caption')?.className ||
+      'MuiTypography-root MuiTypography-caption';
     afterTaxHeader.appendChild(infoSpan);
   }
   
@@ -1000,18 +1000,9 @@ function updateTableValues(table) {
       }
     }
     
-    // Check if the Total value is bold (has the css-xj4mea class)
-    const isTotalBold = totalValueElement.className.includes('css-xj4mea');
-    
     // Update the after-tax value and ensure proper styling
     afterTaxValueElement.textContent = formatSalary(afterTaxSalary);
-    
-    // Make sure the styling matches the Total column (bold if Total is bold)
-    if (isTotalBold && !afterTaxValueElement.className.includes('css-xj4mea')) {
-      afterTaxValueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea';
-    } else if (!isTotalBold && afterTaxValueElement.className.includes('css-xj4mea')) {
-      afterTaxValueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-6xe2a5';
-    }
+    afterTaxValueElement.className = totalValueElement.className;
   });
 }
 
@@ -1027,9 +1018,8 @@ const observer = new MutationObserver(function(mutations) {
       if (mutation.type === 'childList') {
         const hasRelevantChanges = Array.from(mutation.addedNodes).some(node => {
           if (node.nodeType !== 1) return false;
-          return node.querySelector?.('.MuiTable-root, [class*="percentiles_medianAmount"]') ||
-                 node.classList?.contains('MuiTable-root') ||
-                 Array.from(node.classList || []).some(cls => cls.includes('percentiles_medianAmount'));
+          const selector = `.MuiTable-root, ${pageSelectors.medianAmount}`;
+          return node.matches(selector) || node.querySelector(selector);
         });
         if (hasRelevantChanges) shouldUpdate = true;
       }
@@ -1040,30 +1030,10 @@ const observer = new MutationObserver(function(mutations) {
       setTimeout(() => {
         try {
           if (document.querySelector('.MuiTable-root')) {
-            // Check if columns already exist
-            const existingAfterTaxHeaders = Array.from(document.querySelectorAll('th h6')).filter(h => 
-              h.textContent.trim() === 'After Tax ');
-            
-            if (existingAfterTaxHeaders.length > 0) {
-              // Columns exist - only update values, don't create new columns
-              console.log('Taxes.fyi: After Tax columns exist, updating values only');
-              const tables = document.querySelectorAll('.MuiTable-root');
-              tables.forEach(table => {
-                const headerRow = table.querySelector('thead tr');
-                if (!headerRow) return;
-                
-                // Skip detailed tables
-                if (headerRow.querySelector('p[class*="salary-table_sortTableHeaderText"]')) return;
-                
-                updateNormalTableValues(table);
-              });
-            } else {
-              // No columns exist - create them
-              addAfterTaxColumn();
-              addAfterTaxDetailedColumn();
-            }
+            addAfterTaxColumn();
+            addAfterTaxDetailedColumn();
           }
-          if (document.querySelector('[class*="percentiles_medianAmount"]')) {
+          if (document.querySelector(pageSelectors.medianAmount)) {
             // Only skip duplication if we're on an unsupported location page
             const path = window.location.pathname;
             if (path.includes('/locations/')) {
@@ -1132,16 +1102,7 @@ function fixAfterTaxStyles() {
       
       if (!totalValueElement || !afterTaxValueElement) return;
       
-      // Check if the Total value is bold (has the css-xj4mea class)
-      const isTotalBold = totalValueElement.className.includes('css-xj4mea');
-      const isAfterTaxBold = afterTaxValueElement.className.includes('css-xj4mea');
-      
-      // Make sure the styling matches the Total column (bold if Total is bold)
-      if (isTotalBold && !isAfterTaxBold) {
-        afterTaxValueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea';
-      } else if (!isTotalBold && isAfterTaxBold) {
-        afterTaxValueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-6xe2a5';
-      }
+      afterTaxValueElement.className = totalValueElement.className;
     });
   });
 }
@@ -1228,9 +1189,6 @@ function updateAllAfterTaxValues() {
         afterTaxSalary = totalSalary - totalTax;
       }
       
-      // Check if the Total value is bold
-      const isTotalBold = totalValueElement.className.includes('css-xj4mea');
-      
       // Check if this row has an after-tax cell already
       let afterTaxCell;
       if (afterTaxColumnIndex < cells.length) {
@@ -1244,7 +1202,7 @@ function updateAllAfterTaxValues() {
         
         // Create the value element
         const valueElement = document.createElement('h6');
-        valueElement.className = isTotalBold ? 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea' : totalValueElement.className;
+        valueElement.className = totalValueElement.className;
         valueElement.textContent = formatSalary(afterTaxSalary);
         
         afterTaxCell.appendChild(valueElement);
@@ -1262,7 +1220,7 @@ function updateAllAfterTaxValues() {
         if (!valueElement) {
           // Create value element if it doesn't exist
           valueElement = document.createElement('h6');
-          valueElement.className = isTotalBold ? 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea' : totalValueElement.className;
+          valueElement.className = totalValueElement.className;
           afterTaxCell.appendChild(valueElement);
         }
         
@@ -1270,11 +1228,7 @@ function updateAllAfterTaxValues() {
         valueElement.textContent = formatSalary(afterTaxSalary);
         
         // Ensure proper styling
-        if (isTotalBold && !valueElement.className.includes('css-xj4mea')) {
-          valueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-xj4mea';
-        } else if (!isTotalBold && valueElement.className.includes('css-xj4mea')) {
-          valueElement.className = 'MuiTypography-root MuiTypography-subtitle1 css-6xe2a5';
-        }
+        valueElement.className = totalValueElement.className;
       }
     });
   });
@@ -1282,14 +1236,14 @@ function updateAllAfterTaxValues() {
 
 function duplicateCompensationElements() {
     // First check if we already added the after-tax elements
-    const existingAfterTaxLabel = Array.from(document.querySelectorAll('dt[class*="level_breakdownLabel"]'))
+    const existingAfterTaxLabel = Array.from(document.querySelectorAll(pageSelectors.compensationLabel))
         .find(el => el.textContent.startsWith("After Tax"));
     if (existingAfterTaxLabel) {
         return; // Exit if we already added the elements
     }
 
-    const labelElement = document.querySelector('dt[class*="level_breakdownLabel"]');
-    const valueElement = document.querySelector('dd[class*="level_totalComp"]');
+    const labelElement = document.querySelector(pageSelectors.compensationLabel);
+    const valueElement = document.querySelector(pageSelectors.compensationValue);
 
     if (labelElement && valueElement) {
         // Create clones
@@ -1321,13 +1275,7 @@ function duplicateCompensationElements() {
         valueElement.parentNode.insertBefore(labelClone, valueElement.nextSibling);
         labelClone.parentNode.insertBefore(valueClone, labelClone.nextSibling);
 
-        // Initial update once settings are loaded
-        chrome.storage.sync.get(['taxSettings'], function(result) {
-            if (result.taxSettings) {
-                taxSettings = result.taxSettings;
-                updateAfterTaxValue();
-            }
-        });
+        updateAfterTaxValue();
 
         // Set up observer for value changes
         const valueObserver = new MutationObserver((mutations) => {
@@ -1359,16 +1307,16 @@ function duplicateCompensationElements() {
 const compensationObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
         if (mutation.type === 'childList') {
-            const labelElement = document.querySelector('dt[class*="level_breakdownLabel"]');
-            const valueElement = document.querySelector('dd[class*="level_totalComp"]');
+            const labelElement = document.querySelector(pageSelectors.compensationLabel);
+            const valueElement = document.querySelector(pageSelectors.compensationValue);
             
             if (labelElement && valueElement) {
                 // Wait for settings to be loaded before adding elements
                 chrome.storage.sync.get(['taxSettings'], function(result) {
                     if (result.taxSettings) {
                         taxSettings = result.taxSettings;
-                        duplicateCompensationElements();
                     }
+                    duplicateCompensationElements();
                 });
             }
         }
@@ -1382,11 +1330,11 @@ compensationObserver.observe(document.body, {
 });
 
 // Function to add After Tax column for detailed compensation tables
-function addAfterTaxDetailedColumn() {
+function addAfterTaxDetailedColumn(addNewColumn = false) {
   console.log('Taxes.fyi: Looking for detailed compensation tables...');
   
   // Find tables with detailed compensation headers (using flexible selector for CSS modules)
-  const detailedHeaders = document.querySelectorAll('th p[class*="salary-table_sortTableHeaderText"]');
+  const detailedHeaders = document.querySelectorAll(`th ${pageSelectors.detailedHeader}`);
   
   detailedHeaders.forEach((header, index) => {
     if (header.textContent.includes('Total Compensation')) {
@@ -1396,9 +1344,9 @@ function addAfterTaxDetailedColumn() {
       
       // Check if we already added the column
       const existingDetailedHeader = Array.from(headerRow.querySelectorAll('th'))
-        .find(th => th.querySelector('p[class*="salary-table_sortTableHeaderText"]')?.textContent.includes('After Tax'));
+        .find(th => th.querySelector(pageSelectors.detailedHeader)?.textContent.includes('After Tax'));
       
-      if (existingDetailedHeader) return;
+      if (existingDetailedHeader && !addNewColumn) return;
       
       // Create new header cell with same styling as original
       const newHeaderCell = document.createElement('th');
@@ -1407,20 +1355,20 @@ function addAfterTaxDetailedColumn() {
       
       // Create header content with simpler text
       const sortLabel = document.createElement('span');
-      sortLabel.className = 'MuiButtonBase-root MuiTableSortLabel-root css-1x860jj';
+      sortLabel.className = header.closest('.MuiTableSortLabel-root')?.className || 'MuiTableSortLabel-root';
       sortLabel.setAttribute('tabindex', '0');
       sortLabel.setAttribute('role', 'button');
       
       const headerDiv = document.createElement('div');
-      headerDiv.className = 'salary-table_sortTableHeader__9OJDE';
+      headerDiv.className = header.parentElement.className;
       
       const headerText = document.createElement('p');
-      headerText.className = 'MuiTypography-root MuiTypography-body2 salary-table_sortTableHeaderText__IE_ZE css-2o2hpw';
+      headerText.className = header.className;
       headerText.textContent = 'After Tax';
       headerDiv.appendChild(headerText);
       
       const subText = document.createElement('span');
-      subText.className = 'MuiTypography-root MuiTypography-caption css-12nofzu';
+      subText.className = headerCell.querySelector('.MuiTypography-caption')?.className || 'MuiTypography-caption';
       
       // Create filing status abbreviation with partner salary info
       const filingStatusAbbr = taxSettings.filingStatus === 'Married Filing Jointly' ? 'Joint' : 'Single';
@@ -1463,17 +1411,17 @@ function addAfterTaxDetailedColumn() {
         
         // Create new cell with same structure
         const newCell = document.createElement('td');
-        newCell.className = 'MuiTableCell-root MuiTableCell-body MuiTableCell-alignRight MuiTableCell-sizeMedium salary-row_totalCompCell__553Rk css-1b6bj08';
+        newCell.className = totalCell.className;
         
         const outerBox = document.createElement('div');
-        outerBox.className = 'MuiBox-root css-77dmha';
+        outerBox.className = totalCell.querySelector('.MuiBox-root')?.className || 'MuiBox-root';
         
         const emptyDiv = document.createElement('div');
         const contentBox = document.createElement('div');
-        contentBox.className = 'MuiBox-root css-0';
+        contentBox.className = totalValueElement.parentElement.className;
         
         const mainValue = document.createElement('p');
-        mainValue.className = 'MuiTypography-root MuiTypography-body1 css-4g68tt';
+        mainValue.className = totalValueElement.className;
         
         // Calculate after-tax value or show $--- for unsupported locations
         if (totalValue > 0 && location) {
@@ -1509,7 +1457,8 @@ const detailedTableObserver = new MutationObserver((mutations) => {
     if (mutation.type === 'childList') {
       const addedNodes = Array.from(mutation.addedNodes);
       const hasDetailedTable = addedNodes.some(node => 
-        node.nodeType === 1 && node.querySelector?.('p[class*="salary-table_sortTableHeaderText"]')
+        node.nodeType === 1 && (node.matches(pageSelectors.detailedHeader) ||
+          node.querySelector(pageSelectors.detailedHeader))
       );
       
       if (hasDetailedTable) {
@@ -1535,12 +1484,12 @@ function duplicateMedianElements() {
     }
 
     // Check if already added
-    const existingAfterTaxMedian = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
+    const existingAfterTaxMedian = Array.from(document.querySelectorAll(pageSelectors.percentileLabel))
         .find(el => el.textContent.includes('After Tax'));
     if (existingAfterTaxMedian) return;
 
-    const amountElement = document.querySelector('[class*="percentiles_medianAmount"]');
-    const labelElement = document.querySelector('[class*="percentiles_percentileLabel"]');
+    const amountElement = document.querySelector(pageSelectors.medianAmount);
+    const labelElement = amountElement?.parentElement.querySelector(pageSelectors.percentileLabel);
 
     if (amountElement && labelElement) {
         // Create clones
@@ -1609,15 +1558,16 @@ function duplicatePercentileElements() {
     }
 
     // Check if already added
-    const existingAfterTaxPercentile = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
+    const existingAfterTaxPercentile = Array.from(document.querySelectorAll(pageSelectors.percentileLabel))
         .find(el => el.textContent.includes('After Tax 25th%'));
     if (existingAfterTaxPercentile) return;
 
-    const barElement = document.querySelector('[class*="percentiles_percentileBar"]');
-    const amountElement = document.querySelector('[class*="percentiles_percentileBar"] + .css-es1xmb');
-    const labelElement = document.querySelector('[class*="percentiles_percentileBar"] + .css-es1xmb + [class*="percentiles_percentileLabel"]');
+    const barElement = document.querySelector(pageSelectors.percentileBar);
+    const amountElement = barElement?.nextElementSibling;
+    const labelElement = amountElement?.nextElementSibling;
 
-    if (barElement && amountElement && labelElement) {
+    if (barElement && amountElement?.matches('.MuiTypography-h6') &&
+        labelElement?.matches(pageSelectors.percentileLabel)) {
         // Create clones
         const barClone = barElement.cloneNode(true);
         const amountClone = amountElement.cloneNode(true);
@@ -1676,21 +1626,21 @@ function duplicate75thPercentileElements() {
         if (!location) return; // Skip only for unsupported location pages
     }
 
-    const existingAfterTax75thPercentile = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
+    const existingAfterTax75thPercentile = Array.from(document.querySelectorAll(pageSelectors.percentileLabel))
         .find(el => el.textContent.includes('After Tax 75th%'));
     if (existingAfterTax75thPercentile) return;
 
-    const allBars = document.querySelectorAll('[class*="percentiles_percentileBar"]');
+    const allBars = document.querySelectorAll(pageSelectors.percentileBar);
     const barElement = Array.from(allBars).find((bar, index) => {
-        const nextLabel = bar.parentNode.querySelector('[class*="percentiles_percentileLabel"]');
+        const nextLabel = bar.parentNode.querySelector(pageSelectors.percentileLabel);
         return nextLabel && nextLabel.textContent.includes('75th%');
     });
 
     if (!barElement) return;
 
     const container = barElement.parentNode;
-    const amountElement = container.querySelector('.css-es1xmb');
-    const labelElement = container.querySelector('[class*="percentiles_percentileLabel"]');
+    const amountElement = container.querySelector('.MuiTypography-h6');
+    const labelElement = container.querySelector(pageSelectors.percentileLabel);
 
     if (barElement && amountElement && labelElement) {
         const barClone = barElement.cloneNode(true);
@@ -1741,21 +1691,21 @@ function duplicate90thPercentileElements() {
         if (!location) return; // Skip only for unsupported location pages
     }
 
-    const existingAfterTax90thPercentile = Array.from(document.querySelectorAll('[class*="percentiles_percentileLabel"]'))
+    const existingAfterTax90thPercentile = Array.from(document.querySelectorAll(pageSelectors.percentileLabel))
         .find(el => el.textContent.includes('After Tax 90th%'));
     if (existingAfterTax90thPercentile) return;
 
-    const allBars = document.querySelectorAll('[class*="percentiles_percentileBar"]');
+    const allBars = document.querySelectorAll(pageSelectors.percentileBar);
     const barElement = Array.from(allBars).find((bar, index) => {
-        const nextLabel = bar.parentNode.querySelector('[class*="percentiles_percentileLabel"]');
+        const nextLabel = bar.parentNode.querySelector(pageSelectors.percentileLabel);
         return nextLabel && nextLabel.textContent.includes('90th%');
     });
 
     if (!barElement) return;
 
     const container = barElement.parentNode;
-    const amountElement = container.querySelector('.css-es1xmb');
-    const labelElement = container.querySelector('[class*="percentiles_percentileLabel"]');
+    const amountElement = container.querySelector('.MuiTypography-h6');
+    const labelElement = container.querySelector(pageSelectors.percentileLabel);
 
     if (barElement && amountElement && labelElement) {
         const barClone = barElement.cloneNode(true);
@@ -1809,20 +1759,19 @@ const medianObserver = new MutationObserver((mutations) => {
                 if (!location) return; // Skip only for unsupported location pages
             }
 
-            const medianAmount = document.querySelector('[class*="percentiles_medianAmount"]');
-            const medianLabel = document.querySelector('[class*="percentiles_percentileLabel"]');
+            const medianAmount = document.querySelector(pageSelectors.medianAmount);
+            const medianLabel = document.querySelector(pageSelectors.percentileLabel);
             
             if (medianAmount && medianLabel) {
                 chrome.storage.sync.get(['taxSettings'], function(result) {
                     if (result.taxSettings) {
                         taxSettings = result.taxSettings;
-                        duplicateMedianElements();
                     }
+                    duplicateMedianElements();
                 });
             }
 
-            const allBars = document.querySelectorAll('[class*="percentiles_percentileBar"]');
-            const labels = document.querySelectorAll('[class*="percentiles_percentileLabel"]');
+            const labels = document.querySelectorAll(pageSelectors.percentileLabel);
             
             const has25thPercentile = Array.from(labels).some(label => label.textContent.includes('25th%'));
             const has75thPercentile = Array.from(labels).some(label => label.textContent.includes('75th%'));
@@ -1832,10 +1781,10 @@ const medianObserver = new MutationObserver((mutations) => {
                 chrome.storage.sync.get(['taxSettings'], function(result) {
                     if (result.taxSettings) {
                         taxSettings = result.taxSettings;
-                        if (has25thPercentile) duplicatePercentileElements();
-                        if (has75thPercentile) duplicate75thPercentileElements();
-                        if (has90thPercentile) duplicate90thPercentileElements();
                     }
+                    if (has25thPercentile) duplicatePercentileElements();
+                    if (has75thPercentile) duplicate75thPercentileElements();
+                    if (has90thPercentile) duplicate90thPercentileElements();
                 });
             }
         }

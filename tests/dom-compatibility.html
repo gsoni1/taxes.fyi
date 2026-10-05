@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' file:; frame-src 'self' about:; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'">
+<title>Taxes.fyi DOM compatibility regressions</title>
+<style>body { font: 15px monospace; } li { white-space: pre-wrap; margin: 1em 0; } iframe { display: none; }</style>
+<body data-status="running" data-total="8" data-passed="0" data-failed="0">
+<h1>DOM compatibility regressions</h1>
+<p>Actual content.js, synthetic fixtures and storage only. No extensions, profiles, or network required.</p>
+<p id="summary">Running; a result other than data-status="passed" is a failure.</p>
+<ol id="results"></ol>
+<script>
+'use strict';
+const source = new URL('../js/content.js', location.href).href;
+const single = { state: 'WA', filingStatus: 'Single', localTax: 'none', partnerSalary: 0, matchMySalary: false };
+const joint = { ...single, filingStatus: 'Married Filing Jointly' };
+const partner = { ...joint, partnerSalary: 100000 };
+// Fixed expectations preserve the extension's existing tax rules, including its SF adjustment.
+const summaryValues = [
+  ['$131,058', '$70,909', '$185,857', '$237,369', '$131,058'],
+  ['$158,954', '$84,427', '$233,338', '$306,988', '$158,954'],
+  ['$152,519', '$78,736', '$227,961', '$297,861', '$152,519']
+];
+const tableValues = [
+  ['$131,058', '$148,935', '$---', '$149K'],
+  ['$145,050', '$158,954', '$---', '$159K'],
+  ['$135,966', '$152,519', '$---', '$153K']
+];
+const cases = ['legacy', 'current'].flatMap(version =>
+  ['summaries', 'tables'].flatMap(kind =>
+    [false, true].map(delayed => ({ version, kind, delayed, errors: [], done: false,
+      name: `${version}: ${kind}, ${delayed ? 'delayed insertion' : 'static DOM'}` }))));
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+const text = node => node?.textContent.trim() ?? '<missing>';
+const copy = value => JSON.parse(JSON.stringify(value));
+const watchdog = setTimeout(() => {
+  for (const test of cases) {
+    if (!test.done) {
+      test.errors.push('Harness deadline exceeded (12 seconds).');
+      finish(test);
+    }
+  }
+}, 12000);
+window.addEventListener('error', event => failHarness(event.message));
+window.addEventListener('unhandledrejection', event => failHarness(String(event.reason)));
+
+function failHarness(message) {
+  for (const test of cases) {
+    if (!test.done) {
+      test.errors.push(`Harness runtime error: ${message}`);
+      finish(test);
+    }
+  }
+}
+
+function finish(test) {
+  if (test.done) return;
+  test.done = true;
+  test.frame?.remove();
+  test.result.dataset.status = test.errors.length ? 'failed' : 'passed';
+  test.result.textContent = `${test.name}: ${test.result.dataset.status}` +
+    (test.errors.length ? '\n' + test.errors.join('\n') : '');
+  const passed = cases.filter(item => item.done && !item.errors.length).length;
+  const failed = cases.filter(item => item.done && item.errors.length).length;
+  document.body.dataset.passed = passed;
+  document.body.dataset.failed = failed;
+  if (cases.every(item => item.done)) {
+    clearTimeout(watchdog);
+    document.body.dataset.status = failed ? 'failed' : 'passed';
+    document.querySelector('#summary').textContent = `${passed}/${cases.length} passed; ${failed} failed.`;
+  }
+}
+
+function fixture(test) {
+  const current = test.version === 'current';
+  const hash = test.delayed ? 'differentBuild42' : 'EWk8-G';
+  const moduleClass = (module, name) => current
+    ? `${module}-module-scss-module__${module === 'percentiles' ? hash : 'F2LfHW'}__${name}`
+    : `${module}_${name}__${hash}`;
+  const mui = hashName => `${current ? 'mui' : 'css'}-${current && test.delayed ? 'changedHash42' : hashName}`;
+  const typography = (type, hashName) => `MuiTypography-root MuiTypography-${type} ${mui(hashName)}`;
+  if (test.kind === 'summaries') {
+    const percentile = (name, label, amount) => `<div data-fixture="${name}" class="${moduleClass('percentiles', name)}">
+      <div class="${moduleClass('percentiles', 'percentileBar')}" style="width: 100px"></div>
+      <h6 class="${typography('h6', 'es1xmb')}">${amount}</h6>
+      <p class="${typography('body1', '194beqn')} ${moduleClass('percentiles', 'percentileLabel')}">${label}</p></div>`;
+    return `<section>
+      <div data-fixture="median" class="${moduleClass('percentiles', 'median')}">
+        <h3 class="${typography('h4', 'i30w9')} ${moduleClass('percentiles', 'medianAmount')}">$200,000</h3>
+        <p class="${typography('body1', '194beqn')} ${moduleClass('percentiles', 'percentileLabel')}">Median</p></div>
+      ${percentile('twentyFifth', '25th%', '$100K')}
+      ${percentile('seventyFifth', '75th%', '$300,000')}
+      ${percentile('ninetieth', '90th%', '$400K')}
+      <dl data-fixture="level"><dt class="${moduleClass('level', 'breakdownLabel')}">Total Compensation</dt>
+        <dd class="${moduleClass('level', 'totalComp')}">$200,000</dd></dl>
+    </section>`;
+  }
+  const header = (title, subtitle) => `<th class="MuiTableCell-root">
+    <span class="MuiButtonBase-root MuiTableSortLabel-root ${mui('1x860jj')}">
+      <div class="${moduleClass('salary-table', 'sortTableHeader')}">
+        <p class="${typography('body2', '2o2hpw')} ${moduleClass('salary-table', 'sortTableHeaderText')}">${title}</p>
+        <span class="${typography('caption', '12nofzu')}">${subtitle}</span>
+      </div></span></th>`;
+  const row = location => `<tr><td><p class="${typography('body1', 'fixture')}">Example Co</p>
+    <span class="${typography('caption', 'xlmjpr')}">${location} | 15 minutes ago</span></td>
+    <td>Example level</td><td>8 / 2</td>
+    <td class="MuiTableCell-root ${moduleClass('salary-row', 'totalCompCell')}">
+      <div class="MuiBox-root ${mui('77dmha')}"><div class="MuiBox-root ${mui('0')}">
+        <p class="${typography('body1', '4g68tt')}">$200,000</p>
+        <span class="${typography('caption', 'fixture')}">$150K | $40K | $10K</span>
+      </div></div></td></tr>`;
+  return `<section><table data-fixture="detailed" class="MuiTable-root"><thead><tr>
+    ${header('Company', 'Location | Date')}${header('Level Name', 'Tag')}
+    ${header('Years of Experience', 'Total / At Company')}${header('Total Compensation (USD)', 'Base | Stock (yr) | Bonus')}
+    </tr></thead><tbody>${['San Francisco, CA', 'Seattle, WA', 'Toronto, ON'].map(row).join('')}</tbody></table>
+    <table data-fixture="average" class="MuiTable-root"><thead><tr>
+      ${['Base', 'Stock', 'Bonus', 'Total'].map(title => `<th><h6 class="MuiTypography-root MuiTypography-subtitle1 css-xj4mea">${title}</h6></th>`).join('')}
+    </tr></thead><tbody><tr>
+      ${['$150K', '$40K', '$10K', '$200K'].map(amount => `<td><h6 class="MuiTypography-root MuiTypography-subtitle1 css-xj4mea">${amount}</h6></td>`).join('')}
+    </tr></tbody></table></section>`;
+}
+
+function installMocks(test, win) {
+  let stored = test.kind === 'tables'
+    ? { taxSettings: copy(single), columnSettings: { addNewColumn: false } } : {};
+  const listeners = [];
+  Object.defineProperty(win, 'chrome', { configurable: true, value: { storage: {
+    sync: { get(keys, callback) {
+      const result = Object.fromEntries(keys.filter(key => key in stored).map(key => [key, copy(stored[key])]));
+      win.setTimeout(() => callback(result), 0);
+    } },
+    onChanged: { addListener(listener) { listeners.push(listener); } }
+  } } });
+  test.changeSettings = (settings, columns) => {
+    const oldValue = stored.taxSettings;
+    const changes = { taxSettings: { oldValue: copy(oldValue ?? {}), newValue: copy(settings) } };
+    if (columns) {
+      changes.columnSettings = { oldValue: copy(stored.columnSettings ?? {}), newValue: copy(columns) };
+      stored.columnSettings = copy(columns);
+    }
+    stored = { ...stored, taxSettings: copy(settings) };
+    for (const listener of [...listeners]) {
+      listener(changes, 'sync');
+    }
+  };
+  win.addEventListener('error', event => test.errors.push(`Runtime error: ${event.message}`));
+  win.addEventListener('unhandledrejection', event => test.errors.push(`Unhandled rejection: ${event.reason}`));
+  win.console.error = (...args) => test.errors.push(`console.error: ${args.map(String).join(' ')}`);
+  const forbidden = name => function() {
+    const message = `Forbidden API used: ${name}`;
+    test.errors.push(message);
+    throw new Error(message);
+  };
+  for (const name of ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'Worker', 'SharedWorker', 'WebTransport', 'RTCPeerConnection']) {
+    Object.defineProperty(win, name, { configurable: true, value: forbidden(name) });
+  }
+  Object.defineProperty(win.navigator, 'sendBeacon', { configurable: true, value: forbidden('sendBeacon') });
+  for (const name of ['localStorage', 'sessionStorage']) {
+    Object.defineProperty(win, name, { configurable: true, get: forbidden(name) });
+  }
+}
+
+function checkOutput(test, stage, phase) {
+  const doc = test.frame.contentDocument;
+  const eq = (actual, expected, description) => {
+    if (actual !== expected) test.errors.push(`${phase}: ${description}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  };
+  for (const [node, original, classes] of test.originals) {
+    eq(node.isConnected, true, `gross/source node still attached (${original})`);
+    eq(text(node), original, `gross/source text preserved (${original})`);
+    eq(node.className, classes, `source classes preserved (${original})`);
+  }
+  const status = stage === 0 ? 'CA, Single' : `WA, Joint${stage === 2 ? ' +100K' : ''}`;
+  if (test.kind === 'summaries') {
+    const ids = ['median', 'twentyFifth', 'seventyFifth', 'ninetieth', 'level'];
+    const labels = [`After Tax (${status})`, 'After Tax 25th%', 'After Tax 75th%', 'After Tax 90th%', `After Tax (${status})`];
+    ids.forEach((id, index) => {
+      const container = doc.querySelector(`[data-fixture="${id}"]`);
+      const labelTag = id === 'level' ? 'dt' : 'p';
+      const amountTag = id === 'median' ? 'h3' : id === 'level' ? 'dd' : 'h6';
+      const labelsFound = [...container.querySelectorAll(labelTag)].filter(node => text(node).startsWith('After Tax'));
+      const amounts = container.querySelectorAll(amountTag);
+      eq(labelsFound.length, 1, `${id} after-tax label count`);
+      eq(text(labelsFound[0]), labels[index], `${id} label`);
+      eq(amounts.length, 2, `${id} amount count`);
+      eq(text(amounts[1]), summaryValues[stage][index], `${id} exact after-tax amount`);
+      if (index > 0 && index < 4) {
+        const bars = container.querySelectorAll('div');
+        eq(bars.length, 2, `${id} bar count`);
+        eq(bars[0].style.width, '100px', `${id} gross bar width`);
+      }
+    });
+    return;
+  }
+  for (const kind of ['detailed', 'average']) {
+    const table = doc.querySelector(`[data-fixture="${kind}"]`);
+    const headers = [...table.querySelectorAll('thead th')];
+    const after = headers.filter(node => text(node).includes('After Tax'));
+    eq(headers.length, 5, `${kind} column count`);
+    eq(after.length, 1, `${kind} after-tax header count`);
+    if (!after[0]) continue;
+    const detailed = kind === 'detailed';
+    const label = detailed ? `By location, ${stage ? 'Joint' : 'Single'}${stage === 2 ? ' +100K' : ''}`
+      : stage ? status : 'WA, Single';
+    eq(text(after[0].querySelector('.MuiTypography-caption, span:not(.MuiTableSortLabel-root)')), `(${label})`, `${kind} settings label`);
+    const column = headers.indexOf(after[0]);
+    [...table.querySelectorAll('tbody tr')].forEach((row, index) => {
+      eq(row.cells.length, 5, `${kind} row ${index} cell count`);
+      const amount = row.cells[column]?.querySelector(detailed ? 'p.MuiTypography-body1' : 'h6');
+      eq(text(amount), tableValues[stage][detailed ? index : 3], `${kind} row ${index} after-tax amount`);
+      if (detailed && amount) {
+        eq(row.cells[column].className, row.cells[3].className, `detailed row ${index} cloned cell classes`);
+        eq(amount.className, row.cells[3].querySelector('p.MuiTypography-body1').className, `detailed row ${index} cloned value classes`);
+      }
+    });
+    if (detailed) {
+      eq(after[0].querySelector('p')?.className, headers[3].querySelector('p').className, 'detailed cloned header classes');
+    }
+  }
+}
+
+function checkComparisonColumns(test, tables, originals, phase) {
+  const eq = (actual, expected, description) => {
+    if (actual !== expected) test.errors.push(`${phase}: ${description}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  };
+  for (const [node, html] of originals) {
+    eq(node.isConnected, true, 'previous gross/comparison cell remains attached');
+    eq(node.outerHTML, html, 'previous gross/comparison cell remains unchanged');
+  }
+  for (const table of tables) {
+    const kind = table.dataset.fixture;
+    const detailed = kind === 'detailed';
+    const headers = [...table.querySelectorAll('thead th')];
+    const added = headers.filter(node => !originals.has(node));
+    eq(headers.length, 6, `${kind} total header count`);
+    eq(headers.filter(node => text(node).includes('After Tax')).length, 2, `${kind} comparison count`);
+    eq(added.length, 1, `${kind} exactly one newly inserted header`);
+    if (!added[0]) continue;
+    const caption = added[0].querySelector('.MuiTypography-caption');
+    eq(text(caption), detailed ? '(By location, Joint)' : '(WA, Joint)', `${kind} new comparison label`);
+    const column = headers.indexOf(added[0]);
+    [...table.querySelectorAll('tbody tr')].forEach((row, index) => {
+      eq(row.cells.length, 6, `${kind} row ${index} cell count`);
+      eq([...row.cells].filter(node => !originals.has(node)).length, 1, `${kind} row ${index} exactly one new cell`);
+      const value = row.cells[column]?.querySelector(detailed ? 'p.MuiTypography-body1' : 'h6');
+      eq(text(value), tableValues[1][detailed ? index : 3], `${kind} row ${index} new comparison amount`);
+    });
+  }
+}
+
+async function run(test) {
+  try {
+    const frame = test.frame = document.createElement('iframe');
+    frame.title = test.name;
+    const loaded = new Promise(resolve => frame.addEventListener('load', resolve, { once: true }));
+    frame.srcdoc = '<!doctype html><html><head><meta charset="utf-8"></head><body><div id="__next"><main></main></div></body></html>';
+    document.body.append(frame);
+    await loaded;
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument;
+    installMocks(test, win);
+    const insert = () => {
+      doc.querySelector('main').innerHTML = fixture(test);
+      test.originals = [...doc.querySelector('main').querySelectorAll('*')]
+        .filter(node => !node.children.length).map(node => [node, text(node), node.className]);
+    };
+    if (!test.delayed) insert();
+    await new Promise((resolve, reject) => {
+      const script = doc.createElement('script');
+      script.src = source;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error(`Cannot load actual content script: ${source}`));
+      doc.head.append(script);
+    });
+    await pause(3000);
+    if (test.delayed) {
+      insert();
+      await pause(1800);
+    }
+    checkOutput(test, 0, 'initial rendering');
+    for (const [stage, settings] of [[1, joint], [2, partner]]) {
+      test.changeSettings(settings);
+      await pause(700);
+      checkOutput(test, stage, 'storage update ' + stage);
+    }
+    const renderers = test.kind === 'tables' ? ['addAfterTaxColumn', 'addAfterTaxDetailedColumn']
+      : ['duplicateMedianElements', 'duplicatePercentileElements', 'duplicate75thPercentileElements', 'duplicate90thPercentileElements', 'duplicateCompensationElements'];
+    for (let repeat = 0; repeat < 2; repeat++) {
+      for (const name of renderers) win[name]();
+    }
+    await pause(1500);
+    checkOutput(test, 2, 'repeated rendering and observer settling');
+    if (test.kind === 'tables') {
+      const tables = [...doc.querySelectorAll('table')];
+      const originals = new Map(tables.flatMap(table =>
+        [...table.querySelectorAll('th, td')].map(node => [node, node.outerHTML])));
+      test.changeSettings(joint, { addNewColumn: true });
+      await pause(700);
+      checkComparisonColumns(test, tables, originals, 'explicit comparison setting');
+      for (let repeat = 0; repeat < 2; repeat++) {
+        for (const name of renderers) win[name]();
+      }
+      // Reinsert the same tables to exercise real mutation observers without changing their contents.
+      for (const table of tables) table.parentElement.append(table);
+      await pause(1500);
+      checkComparisonColumns(test, tables, originals, 'comparison columns after renderers and observers');
+    }
+  } catch (error) {
+    test.errors.push(`Test exception: ${error.stack || error}`);
+  } finally {
+    finish(test);
+  }
+}
+
+for (const test of cases) {
+  test.result = document.createElement('li');
+  test.result.dataset.status = 'running';
+  test.result.textContent = `${test.name}: running`;
+  document.querySelector('#results').append(test.result);
+}
+for (const test of cases) run(test);
+</script>
+</body>
+</html>
